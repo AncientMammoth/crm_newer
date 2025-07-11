@@ -1,8 +1,9 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import { Menu, Transition } from '@headlessui/react';
-import { BellIcon, Bars3Icon as MenuAlt1Icon, PlusIcon } from '@heroicons/react/24/outline';
+// 1. ShieldCheckIcon is added here
+import { BellIcon, Bars3Icon as MenuAlt1Icon, PlusIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { ChevronDownIcon } from '@heroicons/react/20/solid';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, NavLink } from 'react-router-dom';
 
 // Utility function for class names
 const cn = (...inputs) => inputs.filter(Boolean).join(' ');
@@ -10,6 +11,8 @@ const cn = (...inputs) => inputs.filter(Boolean).join(' ');
 export default function Navbar({ setSidebarOpen }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userInitials, setUserInitials] = useState('');
+  // 2. Get the user's role from localStorage
+  const role = localStorage.getItem("role");
 
   const location = useLocation();
   const onLoginPage = location.pathname === '/login';
@@ -52,6 +55,12 @@ export default function Navbar({ setSidebarOpen }) {
     { name: 'Sign out', href: '/login' },
   ];
 
+  const handleSignOut = (e) => {
+    if (e.target.innerText === 'Sign out') {
+      localStorage.clear();
+    }
+  };
+
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full flex-shrink-0 items-center bg-card shadow-md">
       
@@ -80,13 +89,16 @@ export default function Navbar({ setSidebarOpen }) {
           {isLoggedIn && !onLoginPage && (
             <nav className="hidden md:flex items-center space-x-4">
               {navigation.map((item) => (
-                <Link
+                <NavLink
                   key={item.name}
                   to={item.href}
-                  className="rounded-md px-3 py-2 text-sm font-light text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors duration-150"
+                  className={({ isActive }) => cn(
+                    "rounded-md px-3 py-2 text-sm font-light transition-colors duration-150",
+                    isActive ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                  )}
                 >
                   {item.name}
-                </Link>
+                </NavLink>
               ))}
 
               <Menu as="div" className="relative">
@@ -122,6 +134,20 @@ export default function Navbar({ setSidebarOpen }) {
                   </Menu.Items>
                 </Transition>
               </Menu>
+
+              {/* 3. The conditional "Admin" link is added here */}
+              {role === 'admin' && (
+                <NavLink
+                  to="/admin"
+                  className={({ isActive }) => cn(
+                    "flex items-center rounded-md px-3 py-2 text-sm font-light transition-colors duration-150",
+                    isActive ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                  )}
+                >
+                  <ShieldCheckIcon className="h-5 w-5 mr-2" />
+                  Admin
+                </NavLink>
+              )}
             </nav>
           )}
         </div>
@@ -194,6 +220,7 @@ export default function Navbar({ setSidebarOpen }) {
                       {({ active }) => (
                         <Link
                           to={item.href}
+                          onClick={handleSignOut}
                           className={cn(
                             active ? 'bg-secondary' : '',
                             'block px-4 py-2 text-sm text-foreground'

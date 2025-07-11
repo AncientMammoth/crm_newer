@@ -1,11 +1,13 @@
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const db = require("./db");
+const db = require("./db"); // Assuming db.js is in the same 'api' directory
+const jwt = require("jsonwebtoken");
+
+// It's crucial to use a strong, secret key stored as an environment variable
+const JWT_SECRET = process.env.JWT_SECRET || "your-default-super-secret-key";
 
 const app = express();
-const PORT = 4003;
-
 app.use(cors());
 app.use(bodyParser.json());
 
@@ -15,8 +17,133 @@ const sendError = (res, message, err) => {
 };
 
 // =================================================================
-// USER ENDPOINTS (Unchanged)
+// AUTHENTICATION & AUTHORIZATION
 // =================================================================
+
+// Middleware to verify JWT and attach user info to the request
+const authorize = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1]; // Expects "Bearer TOKEN"
+  if (!token) {
+    return res.status(401).json({ error: "Access denied. No token provided." });
+  }
+  try {
+    // Decodes the token to get { userId, role }
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.status(401).json({ error: "Invalid token." });
+  }
+};
+
+// Middleware to ensure the user has an 'admin' role
+const adminOnly = (req, res, next) => {
+  if (req.user?.role !== "admin") {
+    return res.status(403).json({ error: "Forbidden. Admin access required." });
+  }
+  next();
+};
+
+// NEW LOGIN ENDPOINT
+app.post("/api/login", async (req, res) => {
+  try {
+    const { secretKey } = req.body;
+    if (!secretKey) {
+      return res.status(400).json({ error: "Secret key is required." });
+    }
+
+    // Fetch user and the new 'user_type' column from the database
+    const { rows } = await db.query(
+      "SELECT id, user_name, user_type FROM users WHERE airtable_id = $1",
+      [secretKey]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Invalid secret key." });
+    }
+
+    const user = rows[0];
+    const token = jwt.sign(
+      { userId: user.id, role: user.user_type }, // The role is now in the token
+      JWT_SECRET,
+      { expiresIn: "8h" }
+    );
+
+    res.json({
+      token,
+      userName: user.user_name,
+      role: user.user_type,
+    });
+  } catch (err) {
+    sendError(res, "Login failed.", err);
+  }
+});
+
+// =================================================================
+// ADMIN ENDPOINTS
+// =================================================================
+
+// This single endpoint fetches all necessary data for the admin dashboard.
+// It is protected by both 'authorize' and 'adminOnly' middleware.
+app.get("/api/admin/dashboard-data", authorize, adminOnly, async (req, res) => {
+  try {
+    const usersQuery = "SELECT id, user_name, email, user_type FROM users ORDER BY user_name";
+    const projectsQuery = `
+        SELECT p.*, a.account_name, u.user_name as project_owner_name
+        FROM projects p
+        JOIN accounts a ON p.account_id = a.id
+        JOIN users u ON p.project_owner_id = u.id
+    `;
+    const updatesQuery = "SELECT * FROM updates ORDER BY date DESC";
+
+    const [usersResult, projectsResult, updatesResult] = await Promise.all([
+        db.query(usersQuery),
+        db.query(projectsQuery),
+        db.query(updatesQuery)
+    ]);
+
+    res.json({
+        users: usersResult.rows,
+        projects: projectsResult.rows,
+        updates: updatesResult.rows,
+    });
+
+  } catch (err) {
+    sendError(res, "Failed to fetch admin dashboard data.", err);
+  }
+});
+
+// Allows an admin to assign a task to any user.
+app.post("/api/admin/assign-task", authorize, adminOnly, async (req, res) => {
+    // The admin's ID is taken from the token, not the request body
+    const created_by_id = req.user.userId;
+    const {
+        "Task Name": name,
+        "Project": project_id,
+        "Assigned To": assigned_to_id,
+        "Due Date": due_date,
+        "Status": status,
+        "Description": description
+    } = req.body;
+
+    try {
+        if (!name || !project_id || !assigned_to_id || !status) {
+            return res.status(400).json({ error: "Missing required task fields." });
+        }
+        
+        const { rows } = await db.query(
+            `INSERT INTO tasks (task_name, project_id, assigned_to_id, due_date, status, description, created_by_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+            [name, Array.isArray(project_id) ? project_id[0] : project_id, assigned_to_id, due_date, status, description, created_by_id]
+        );
+        res.status(201).json(rows[0]);
+
+    } catch (err) {
+        sendError(res, 'Failed to create task.', err);
+    }
+});
+
+
 
 app.get("/api/users/by-secret-key/:key", async (req, res) => {
   try {

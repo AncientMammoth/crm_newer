@@ -1,10 +1,18 @@
-// Generic API request helper for your new backend
+// Generic API request helper modified to automatically include the auth token
 async function apiRequest(path, options = {}) {
   const url = `/api/${path}`;
+  const headers = { "Content-Type": "application/json" };
+  const token = localStorage.getItem("token");
+
+  // If a token exists, add it to the Authorization header
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   try {
     const res = await fetch(url, {
       method: options.method || "GET",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: options.body ? JSON.stringify(options.body) : undefined,
     });
     if (!res.ok) {
@@ -19,7 +27,52 @@ async function apiRequest(path, options = {}) {
 }
 
 // =================================================================
-// DATA FORMATTING HELPERS
+// NEW AUTH & ADMIN FUNCTIONS
+// =================================================================
+
+/**
+ * Logs in a user using their secret key.
+ * @param {string} secretKey - The 6-digit user secret key.
+ * @returns {Promise<object>} - A promise that resolves to { token, role, userName }.
+ */
+export async function loginUser(secretKey) {
+  try {
+    const data = await apiRequest("login", {
+      method: "POST",
+      body: { secretKey },
+    });
+    return data;
+  } catch (err) {
+    // Let the calling component (Login.jsx) handle displaying the error
+    throw err;
+  }
+}
+
+/**
+ * Fetches all data required for the admin dashboard.
+ * @returns {Promise<object>} - A promise that resolves to { users, projects, updates }.
+ */
+export async function getAdminDashboardData() {
+    // The JWT is sent automatically by apiRequest
+    return await apiRequest("admin/dashboard-data");
+}
+
+/**
+ * Assigns a new task as an admin.
+ * @param {object} taskData - The data for the new task.
+ * @returns {Promise<object>} - A promise that resolves to the newly created task.
+ */
+export async function assignTask(taskData) {
+    // The JWT is sent automatically by apiRequest
+    return await apiRequest("admin/assign-task", {
+        method: "POST",
+        body: taskData,
+    });
+}
+
+
+// =================================================================
+// DATA FORMATTING HELPERS (Unchanged from your original file)
 // =================================================================
 
 const formatAccount = (acc) => ({
@@ -62,12 +115,6 @@ const formatTask = (task) => ({
     }
 });
 
-/**
- * Formats an update object from the backend to the structure expected by the frontend.
- * This now includes the account name for display purposes.
- * @param {object} update - The update object from the backend.
- * @returns {object} The formatted update object.
- */
 const formatUpdate = (update) => ({
     id: update.id, // Use numerical id
     fields: {
@@ -79,7 +126,6 @@ const formatUpdate = (update) => ({
         "Update Owner Name": update.update_owner_name ? [update.update_owner_name] : [],
         "Project Name": update.project_name,
         "Task Name": update.task_name,
-        // The new field is mapped here for display on the frontend
         "Account Name": update.update_account,
     }
 });
@@ -89,13 +135,13 @@ const formatUpdate = (update) => ({
 // RE-IMPLEMENTED API FUNCTIONS
 // =================================================================
 
-// === USER AUTH (Unchanged) ===
+// === USER AUTH (No longer used for login, but kept for potential other uses) ===
 export async function fetchUserBySecretKey(secretKey) {
   try {
     // This still uses the `airtable_id` as the secret key
     const userFromDb = await apiRequest(`users/by-secret-key/${secretKey}`);
     if (!userFromDb) return null;
-    
+
     return {
       id: userFromDb.airtable_id, // The user's primary ID on the frontend is their airtable_id
       fields: {

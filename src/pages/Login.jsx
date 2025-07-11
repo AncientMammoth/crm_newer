@@ -1,17 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import React, { useState, useRef } from "react";
-import { fetchUserBySecretKey } from "../api";
+import { loginUser } from "../api"; // This function is updated in the next file
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import { motion } from 'framer-motion';
 import { LockClosedIcon } from '@heroicons/react/24/outline';
-
-
-// Define your admin's secret key here.
-// In a real app, this should be stored securely as an environment variable.
-const ADMIN_SECRET_KEY = "123456"; // Replace with your actual admin key
-
 
 export default function Login() {
   const navigate = useNavigate();
@@ -21,50 +15,41 @@ export default function Login() {
   const inputRef = useRef();
 
   const handleInputChange = async (e) => {
-    const value = e.target.value.replace(/\D/g, ""); // Only digits
+    const value = e.target.value.replace(/\D/g, ""); // Only allow digits
     setValue("secretKey", value);
 
     if (value.length === 6) {
       setLoginError("");
       setLoading(true);
       try {
-        const user = await fetchUserBySecretKey(value);
-        if (!user) {
+        // Call the new, secure login API function
+        const { token, role, userName } = await loginUser(value);
+
+        if (!token) {
           setLoginError("Invalid secret key. Please try again.");
-          setValue("secretKey", "");
-          if(inputRef.current) {
-            inputRef.current.value = "";
-          }
+          if(inputRef.current) inputRef.current.value = "";
           setLoading(false);
           return;
         }
 
+        // Clear any old data and store the new token and user info
         localStorage.clear();
+        localStorage.setItem("token", token);
+        localStorage.setItem("userName", userName);
+        localStorage.setItem("role", role);
 
-        // Check if the entered key is the admin key
-        if (value === ADMIN_SECRET_KEY) {
-            localStorage.setItem("isAdmin", "true");
-            console.log("Admin user logged in.");
-        } else {
-            localStorage.setItem("isAdmin", "false");
-        }
-
-        localStorage.setItem("userName", user.fields["User Name"] || "User");
-        localStorage.setItem("secretKey", value);
-        localStorage.setItem("userRecordId", user.id);
-        localStorage.setItem("accountIds", JSON.stringify(user.fields.Accounts || []));
-        localStorage.setItem("projectIds", JSON.stringify(user.fields.Projects || []));
-        localStorage.setItem("updateIds", JSON.stringify(user.fields.Updates || []));
-        localStorage.setItem("taskIds", JSON.stringify(user.fields["Tasks (Assigned To)"] || []));
-        localStorage.setItem("createdTaskIds", JSON.stringify(user.fields["Tasks (Created By)"] || []));
         setLoading(false);
-        navigate("/");
-      } catch (err) {
-        setLoginError("Authentication failed. Please check your connection and try again.");
-        setValue("secretKey", "");
-        if(inputRef.current) {
-            inputRef.current.value = "";
+
+        // Redirect based on the user's role from the backend
+        if (role === 'admin') {
+          navigate("/admin");
+        } else {
+          navigate("/"); // Or your regular user dashboard route
         }
+
+      } catch (err) {
+        setLoginError(err.message || "Authentication failed. Please try again.");
+        if(inputRef.current) inputRef.current.value = "";
         setLoading(false);
       }
     }
@@ -74,7 +59,7 @@ export default function Login() {
     <>
       <Navbar />
       <div className="min-h-[80vh] flex items-center justify-center bg-card px-4 sm:px-6 lg:px-8">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -98,12 +83,7 @@ export default function Login() {
               </label>
               <input
                 id="secretKey"
-                {...register("secretKey", {
-                  required: "Secret key is required",
-                  minLength: { value: 6, message: "Key must be 6 digits" },
-                  maxLength: { value: 6, message: "Key must be 6 digits" },
-                  pattern: { value: /^\d{6}$/, message: "Key must be 6 digits" },
-                })}
+                {...register("secretKey")}
                 type="password"
                 placeholder="● ● ● ● ● ●"
                 className="block w-full rounded-lg border border-border bg-secondary shadow-sm focus:border-primary focus:ring-primary text-foreground placeholder-muted-foreground py-4 px-5 text-center tracking-[1.5em] text-2xl font-mono placeholder:tracking-normal"
