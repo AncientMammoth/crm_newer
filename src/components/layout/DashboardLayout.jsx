@@ -1,19 +1,21 @@
-import { Outlet } from "react-router-dom";
 import React from "react";
-import Navbar from "./Navbar";
-import Footer from "./Footer";
+import { Outlet } from "react-router-dom";
+import AdminNavbar from "./AdminNavbar"; // Assuming you have this component
+import RegularNavbar from "./RegularNavbar"; // Assuming you have this component
 
-export default function DashboardLayout() {
+const DashboardLayout = () => {
+  // In a real application, you would get the user's role from a more secure location,
+  // like a context provider or a Redux store after they log in.
+  const userRole = localStorage.getItem("userRole"); // Assuming role is stored in localStorage
+
   return (
-    // CHANGED: Added the 'font-light' class here.
-    // This will apply the light font weight to all child elements,
-    // including all the pages rendered by the <Outlet />.
-    <div className="flex flex-col min-h-screen bg-card font-light">
-      <Navbar />
-      <main className="flex-1 w-full">
+    <div>
+      {userRole === "admin" ? <AdminNavbar /> : <RegularNavbar />}
+      <main>
         <Outlet />
       </main>
-      <Footer />
     </div>
   );
-}
+};
+
+export default DashboardLayout;
