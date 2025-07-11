@@ -14,24 +14,15 @@ const ProtectedRoute = ({ children }) => {
 // This component checks if the logged-in user is an admin.
 const AdminRoute = ({ children }) => {
   const role = localStorage.getItem("role");
-  // It also ensures a token exists, adding an extra layer of security.
-  const token = localStorage.getItem("token");
-  if (token && role === "admin") {
-    return children;
-  }
-  // If not an admin, redirect them away.
-  return <Navigate to="/" replace />;
+  return (role === "admin") ? children : <Navigate to="/" replace />;
 };
 
-// This component handles the main application layout for regular users.
-const UserRoutes = () => {
-    const role = localStorage.getItem("role");
-    // If a logged-in user is an admin, redirect them from regular pages to their dashboard.
-    if (role === 'admin') {
-        return <Navigate to="/admin" replace />;
-    }
-    return <Home />;
-}
+// This component checks if the logged-in user is a regular user.
+const RegularUserRoute = ({ children }) => {
+  const role = localStorage.getItem("role");
+  // If an admin tries to access a regular user page, redirect them to their dashboard.
+  return (role !== "admin") ? children : <Navigate to="/admin" replace />;
+};
 
 function App() {
   return (
@@ -40,20 +31,26 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         
+        {/* Admin Route: Must be logged in and have 'admin' role */}
         <Route
           path="/admin/*"
           element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
+            <ProtectedRoute>
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            </ProtectedRoute>
           }
         />
 
+        {/* Regular User Route: Must be logged in and NOT have 'admin' role */}
         <Route
           path="/*"
           element={
             <ProtectedRoute>
-              <UserRoutes />
+              <RegularUserRoute>
+                <Home />
+              </RegularUserRoute>
             </ProtectedRoute>
           }
         />
