@@ -7,6 +7,12 @@ import Footer from "../components/layout/Footer";
 import { motion } from 'framer-motion';
 import { LockClosedIcon } from '@heroicons/react/24/outline';
 
+
+// Define your admin's secret key here.
+// In a real app, this should be stored securely as an environment variable.
+const ADMIN_SECRET_KEY = "123456"; // Replace with your actual admin key
+
+
 export default function Login() {
   const navigate = useNavigate();
   const { register, setValue, formState: { errors } } = useForm();
@@ -35,31 +41,24 @@ export default function Login() {
 
         localStorage.clear();
 
-        // ### MODIFIED: Store user data in localStorage ###
-        // The user object from the API now contains user_type
-        localStorage.setItem("userName", user.user_name || "User");
-        localStorage.setItem("userType", user.user_type || "regular"); // Store the user type
-        // ### NEW: Store the airtable_id for API calls ###
-        localStorage.setItem("userAirtableId", user.airtable_id);
-        localStorage.setItem("secretKey", value);
-        localStorage.setItem("userRecordId", user.id);
-        localStorage.setItem("accountIds", JSON.stringify(user.accounts || []));
-        localStorage.setItem("projectIds", JSON.stringify(user.projects || []));
-        localStorage.setItem("updateIds", JSON.stringify(user.updates || []));
-        localStorage.setItem("taskIds", JSON.stringify(user.tasks_assigned_to || []));
-        localStorage.setItem("createdTaskIds", JSON.stringify(user.tasks_created_by || []));
-        
-        setLoading(false);
-
-        // ### MODIFIED: Redirect based on user_type ###
-        if (user.user_type === 'admin') {
-            console.log("Admin user logged in. Redirecting to admin dashboard.");
-            navigate("/admin"); // Navigate to the new admin dashboard
+        // Check if the entered key is the admin key
+        if (value === ADMIN_SECRET_KEY) {
+            localStorage.setItem("isAdmin", "true");
+            console.log("Admin user logged in.");
         } else {
-            console.log("Regular user logged in. Redirecting to main dashboard.");
-            navigate("/"); // Navigate to the regular user dashboard
+            localStorage.setItem("isAdmin", "false");
         }
 
+        localStorage.setItem("userName", user.fields["User Name"] || "User");
+        localStorage.setItem("secretKey", value);
+        localStorage.setItem("userRecordId", user.id);
+        localStorage.setItem("accountIds", JSON.stringify(user.fields.Accounts || []));
+        localStorage.setItem("projectIds", JSON.stringify(user.fields.Projects || []));
+        localStorage.setItem("updateIds", JSON.stringify(user.fields.Updates || []));
+        localStorage.setItem("taskIds", JSON.stringify(user.fields["Tasks (Assigned To)"] || []));
+        localStorage.setItem("createdTaskIds", JSON.stringify(user.fields["Tasks (Created By)"] || []));
+        setLoading(false);
+        navigate("/");
       } catch (err) {
         setLoginError("Authentication failed. Please check your connection and try again.");
         setValue("secretKey", "");
@@ -75,7 +74,7 @@ export default function Login() {
     <>
       <Navbar />
       <div className="min-h-[80vh] flex items-center justify-center bg-card px-4 sm:px-6 lg:px-8">
-        <motion.div
+        <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}

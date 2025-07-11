@@ -15,17 +15,15 @@ const sendError = (res, message, err) => {
 };
 
 // =================================================================
-// MODIFIED USER ENDPOINTS
+// USER ENDPOINTS (Unchanged)
 // =================================================================
 
-// ### MODIFIED: This route now also fetches the user_type ###
 app.get("/api/users/by-secret-key/:key", async (req, res) => {
   try {
     const { key } = req.params;
-    // The query now joins the user_type from the users table
     const { rows } = await db.query(
       `SELECT
-        u.id, u.airtable_id, u.user_name, u.user_type,
+        u.id, u.airtable_id, u.user_name,
         COALESCE(json_agg(DISTINCT a.id) FILTER (WHERE a.id IS NOT NULL), '[]') AS accounts,
         COALESCE(json_agg(DISTINCT p.id) FILTER (WHERE p.id IS NOT NULL), '[]') AS projects,
         COALESCE(json_agg(DISTINCT t_assigned.id) FILTER (WHERE t_assigned.id IS NOT NULL), '[]') AS tasks_assigned_to,
@@ -38,7 +36,7 @@ app.get("/api/users/by-secret-key/:key", async (req, res) => {
       LEFT JOIN tasks t_created ON t_created.created_by_id = u.id
       LEFT JOIN updates upd ON upd.update_owner_id = u.id
       WHERE u.airtable_id = $1
-      GROUP BY u.id, u.airtable_id, u.user_name, u.user_type`, // Added user_type to GROUP BY
+      GROUP BY u.id, u.airtable_id, u.user_name`,
       [key]
     );
     if (rows.length === 0) return res.status(404).json({ error: "User not found." });
@@ -48,17 +46,14 @@ app.get("/api/users/by-secret-key/:key", async (req, res) => {
   }
 });
 
-
 app.get("/api/users", async (req, res) => {
     try {
-        // ### MODIFIED: Also select the user_type column ###
-        const { rows } = await db.query("SELECT id, airtable_id, user_name, user_type FROM users ORDER BY user_name;");
+        const { rows } = await db.query("SELECT id, airtable_id, user_name FROM users ORDER BY user_name;");
         res.json(rows);
     } catch (err) {
         sendError(res, "Failed to fetch all users.", err);
     }
 });
-
 
 app.patch("/api/users/:id", async (req, res) => {
     res.status(200).json({ message: "User update acknowledged." });
@@ -66,55 +61,8 @@ app.patch("/api/users/:id", async (req, res) => {
 
 
 // =================================================================
-// ### NEW: ADMIN ENDPOINT ###
-// This new endpoint gets all data for the admin dashboard.
-// Note: In a real-world app, this should be protected by middleware
-// that robustly checks for an admin's session or JWT token.
+// FETCH BY IDs ENDPOINTS (Unchanged)
 // =================================================================
-
-app.get("/api/admin/all-data", async (req, res) => {
-    try {
-        const { rows } = await db.query(`
-            SELECT
-                u.id as user_id,
-                u.user_name,
-                u.email,
-                u.user_type,
-                COALESCE(
-                    (SELECT json_agg(p) FROM projects p WHERE p.project_owner_id = u.id),
-                    '[]'::json
-                ) as projects,
-                COALESCE(
-                    (SELECT json_agg(a) FROM accounts a WHERE a.account_owner_id = u.id),
-                    '[]'::json
-                ) as accounts,
-                COALESCE(
-                    (SELECT json_agg(upd) FROM updates upd WHERE upd.update_owner_id = u.id),
-                    '[]'::json
-                ) as updates
-            FROM users u
-            ORDER BY u.user_name;
-        `);
-        res.json(rows);
-    } catch (err) {
-        sendError(res, "Failed to fetch all admin data.", err);
-    }
-});
-
-
-// =================================================================
-// FETCH BY IDs ENDPOINTS & ### NEW /api/all-projects ENDPOINT ###
-// =================================================================
-
-// ### NEW: Endpoint to fetch all projects for admin dashboard dropdowns ###
-app.get("/api/all-projects", async (req, res) => {
-    try {
-        const { rows } = await db.query("SELECT id, project_name FROM projects ORDER BY project_name;");
-        res.json(rows);
-    } catch (err) {
-        sendError(res, "Failed to fetch all projects.", err);
-    }
-});
 
 app.get("/api/accounts", async (req, res) => {
     try {
@@ -128,8 +76,8 @@ app.get("/api/accounts", async (req, res) => {
                COALESCE(p.projects, '[]') as projects
              FROM accounts a
              LEFT JOIN (
-                SELECT
-                  account_id,
+                SELECT 
+                  account_id, 
                   json_agg(p.id) as projects
                 FROM projects p
                 GROUP BY account_id
@@ -137,7 +85,7 @@ app.get("/api/accounts", async (req, res) => {
              WHERE a.id = ANY($1::integer[])`,
             [idArray]
         );
-
+        
         res.json(rows);
     } catch (err) {
         sendError(res, 'Failed to fetch accounts', err);
@@ -149,17 +97,17 @@ app.get("/api/projects", async (req, res) => {
         const { ids } = req.query;
         if (!ids) return res.status(400).json({ error: "No IDs provided." });
         const idArray = ids.split(',').map(Number);
-
+        
         const { rows } = await db.query(
-            `SELECT
-               p.*,
+            `SELECT 
+               p.*, 
                a.account_name,
                COALESCE(upd.updates, '[]'::json) as updates
              FROM projects p
              LEFT JOIN accounts a ON p.account_id = a.id
              LEFT JOIN (
-                SELECT
-                  project_id,
+                SELECT 
+                  project_id, 
                   json_agg(upd.id ORDER BY date DESC, created_at DESC) as updates
                 FROM updates upd
                 GROUP BY project_id
@@ -180,22 +128,22 @@ app.get("/api/tasks", async (req, res) => {
         const idArray = ids.split(',').map(Number);
 
         const { rows } = await db.query(
-            `SELECT
-               t.*,
-               p.project_name,
-               p.id as project_id,
+            `SELECT 
+               t.*, 
+               p.project_name, 
+               p.id as project_id, 
                u.user_name as assigned_to_name,
                COALESCE(upd.updates, '[]'::json) as updates
              FROM tasks t
              LEFT JOIN projects p ON t.project_id = p.id
              LEFT JOIN users u ON t.assigned_to_id = u.id
              LEFT JOIN (
-                SELECT
-                  task_id,
+                SELECT 
+                  task_id, 
                   json_agg(
                     json_build_object(
-                      'id', up.id,
-                      'notes', up.notes,
+                      'id', up.id, 
+                      'notes', up.notes, 
                       'date', up.date,
                       'update_type', up.update_type,
                       'update_owner_name', owner.user_name
@@ -221,8 +169,8 @@ app.get("/api/updates", async (req, res) => {
     try {
         const { ids } = req.query;
         let query = `
-            SELECT
-              u.*,
+            SELECT 
+              u.*, 
               owner.user_name as update_owner_name,
               p.project_name,
               p.id as project_id,
@@ -265,7 +213,7 @@ app.post("/api/accounts", async (req, res) => {
         const ownerRes = await db.query("SELECT id FROM users WHERE airtable_id = $1", [owner_airtable_id_arr[0]]);
         const owner_id = ownerRes.rows[0]?.id;
         if (!owner_id) return res.status(400).json({ error: "Invalid account owner ID" });
-
+        
         const { rows } = await db.query(
             `INSERT INTO accounts (account_name, account_type, account_description, account_owner_id) VALUES ($1, $2, $3, $4) RETURNING *`,
             [account_name, account_type, account_description, owner_id]
@@ -302,21 +250,21 @@ app.post("/api/tasks", async (req, res) => {
     try {
         const assignedToRes = await db.query("SELECT id FROM users WHERE airtable_id = $1", [assigned_to_airtable_id]);
         const createdByRes = await db.query("SELECT id FROM users WHERE airtable_id = $1", [created_by_airtable_id]);
-
+        
         const assigned_to_id = assignedToRes.rows[0]?.id;
         const created_by_id = createdByRes.rows[0]?.id;
 
         if (!project_id || !assigned_to_id || !created_by_id) {
             return res.status(400).json({ error: "Invalid project, assigned to, or created by ID" });
         }
-
+        
         const { rows } = await db.query(
             `INSERT INTO tasks (task_name, project_id, assigned_to_id, due_date, status, description, created_by_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
             [name, project_id, assigned_to_id, due_date, status, description, created_by_id]
         );
         res.status(201).json(rows[0]);
-    } catch (err) {
-        sendError(res, 'Failed to create task.', err);
+    } catch (err) { 
+        sendError(res, 'Failed to create task.', err); 
     }
 });
 
@@ -350,10 +298,10 @@ app.post("/api/updates", async (req, res) => {
         if (!project_id || !owner_id || !project_name || !update_owner_name || !update_account) {
             return res.status(400).json({ error: "Invalid IDs, or associated names/account could not be found." });
         }
-
+        
         // --- Add the new names to the INSERT statement ---
         const { rows } = await db.query(
-            `INSERT INTO updates (notes, date, update_type, project_id, task_id, update_owner_id, project_name, update_owner_name, update_account)
+            `INSERT INTO updates (notes, date, update_type, project_id, task_id, update_owner_id, project_name, update_owner_name, update_account) 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
             [notes, date, update_type, project_id, task_id || null, owner_id, project_name, update_owner_name, update_account]
         );
