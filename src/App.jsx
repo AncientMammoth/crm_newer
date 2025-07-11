@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom'; // No need to import BrowserRouter here
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Accounts from './pages/Accounts';
@@ -9,7 +9,7 @@ import Updates from './pages/Updates';
 import AccountDetail from './pages/AccountDetail';
 import ProjectDetail from './pages/ProjectDetail';
 import TaskDetail from './pages/TaskDetail';
-import AdminDashboard from './pages/AdminDashboard'; // Import the new AdminDashboard
+import AdminDashboard from './pages/AdminDashboard'; 
 
 // This component will protect routes that require admin access
 const AdminRoute = ({ children }) => {
@@ -27,8 +27,9 @@ const ProtectedRoute = ({ children }) => {
 
 
 function App() {
+  // CORRECT: The <Router> component has been removed from this file.
+  // It is now only in src/main.jsx
   return (
-    <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
         
@@ -56,7 +57,6 @@ function App() {
         {/* Fallback route - maybe redirect to home or a 404 page */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
-    </Router>
   );
 }
 
