@@ -89,24 +89,16 @@ const formatUpdate = (update) => ({
 // RE-IMPLEMENTED API FUNCTIONS
 // =================================================================
 
-// === USER AUTH (Unchanged) ===
+// === USER AUTH ===
 export async function fetchUserBySecretKey(secretKey) {
   try {
     // This still uses the `airtable_id` as the secret key
     const userFromDb = await apiRequest(`users/by-secret-key/${secretKey}`);
     if (!userFromDb) return null;
     
-    return {
-      id: userFromDb.airtable_id, // The user's primary ID on the frontend is their airtable_id
-      fields: {
-        "User Name": userFromDb.user_name,
-        "Accounts": userFromDb.accounts,
-        "Projects": userFromDb.projects,
-        "Tasks (Assigned To)": userFromDb.tasks_assigned_to,
-        "Tasks (Created By)": userFromDb.tasks_created_by,
-        "Updates": userFromDb.updates,
-      }
-    };
+    // This is the modified response that now includes user_type from the backend
+    return userFromDb;
+
   } catch (err) {
     if (err.message.includes("404")) return null;
     throw err;
@@ -116,7 +108,7 @@ export async function fetchUserBySecretKey(secretKey) {
 export async function fetchAllUsers() {
     const users = await apiRequest("users");
     // The component expects an `id` field which is the airtable_id for users
-    return users.map(u => ({ id: u.airtable_id, fields: { "User Name": u.user_name } }));
+    return users.map(u => ({ id: u.airtable_id, airtable_id: u.airtable_id, fields: { "User Name": u.user_name }, ...u }));
 }
 
 // === GENERIC CUD HELPERS ===
@@ -173,7 +165,6 @@ export const fetchTaskById = async (id) => (await fetchTasksByIds([id]))[0] || n
 // === CREATION FUNCTIONS ===
 export const createAccount = (fields) => createRecord("Accounts", fields);
 export const createProject = (fields) => createRecord("Projects", fields);
-export const createTask = (fields) => createRecord("Tasks", fields);
 export const createUpdate = (fields) => createRecord("Updates", fields);
 
 // === UPDATE FUNCTIONS ===
@@ -212,3 +203,32 @@ export function processUpdatesByProject(allUpdates, projectIds = []) {
   });
   return updatesByProjectId;
 }
+
+// =================================================================
+// === NEW FUNCTIONS FOR ADMIN DASHBOARD ===
+// =================================================================
+
+export const fetchAdminData = async () => {
+    const res = await fetch('/api/admin/all-data');
+    if (!res.ok) throw new Error("Failed to fetch admin data");
+    return res.json();
+};
+
+export const fetchAllProjects = async () => {
+    const res = await fetch('/api/all-projects');
+    if (!res.ok) throw new Error("Failed to fetch projects");
+    return res.json();
+};
+
+export const createTask = async (taskData) => {
+    const res = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(taskData)
+    });
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to create task");
+    }
+    return res.json();
+};
