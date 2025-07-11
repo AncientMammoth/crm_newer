@@ -1,50 +1,59 @@
 import React from "react";
-// The Router (aliased as BrowserRouter) is no longer imported or used here
 import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import { Toaster } from "sonner";
 
-// A component to protect routes that require a user to be logged in
+// This component checks if a user is logged in.
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
-  return token ? children : <Navigate to="/login" />;
+  return token ? children : <Navigate to="/login" replace />;
 };
 
-// A component to protect routes that require admin privileges
+// This component checks if the logged-in user is an admin.
 const AdminRoute = ({ children }) => {
   const role = localStorage.getItem("role");
-  return role === "admin" ? children : <Navigate to="/" />;
+  // It also ensures a token exists, adding an extra layer of security.
+  const token = localStorage.getItem("token");
+  if (token && role === "admin") {
+    return children;
+  }
+  // If not an admin, redirect them away.
+  return <Navigate to="/" replace />;
 };
+
+// This component handles the main application layout for regular users.
+const UserRoutes = () => {
+    const role = localStorage.getItem("role");
+    // If a logged-in user is an admin, redirect them from regular pages to their dashboard.
+    if (role === 'admin') {
+        return <Navigate to="/admin" replace />;
+    }
+    return <Home />;
+}
 
 function App() {
   return (
-    // The <TooltipProvider> and <Router> wrappers are removed from this file
     <>
       <Toaster richColors position="top-right" />
       <Routes>
-        {/* Publicly accessible Login route */}
         <Route path="/login" element={<Login />} />
+        
+        <Route
+          path="/admin/*"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
 
-        {/* Protected route for the main user dashboard */}
         <Route
           path="/*"
           element={
             <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Protected route for the admin dashboard */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <AdminRoute>
-                <AdminDashboard />
-              </AdminRoute>
+              <UserRoutes />
             </ProtectedRoute>
           }
         />

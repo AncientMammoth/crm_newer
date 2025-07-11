@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import React, { useState, useRef } from "react";
-import { loginUser } from "../api"; // This function is updated in the next file
+import { loginUser } from "../api";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import { motion } from 'framer-motion';
@@ -9,42 +9,54 @@ import { LockClosedIcon } from '@heroicons/react/24/outline';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { register, setValue, formState: { errors } } = useForm();
+  const { register, setValue } = useForm();
   const [loginError, setLoginError] = useState("");
   const [loading, setLoading] = useState(false);
   const inputRef = useRef();
 
   const handleInputChange = async (e) => {
-    const value = e.target.value.replace(/\D/g, ""); // Only allow digits
+    const value = e.target.value.replace(/\D/g, "");
     setValue("secretKey", value);
 
     if (value.length === 6) {
       setLoginError("");
       setLoading(true);
       try {
-        // Call the new, secure login API function
-        const { token, role, userName } = await loginUser(value);
+        // The loginUser function now returns the token and the full user object
+        const { token, user } = await loginUser(value);
 
-        if (!token) {
+        if (!token || !user) {
           setLoginError("Invalid secret key. Please try again.");
           if(inputRef.current) inputRef.current.value = "";
           setLoading(false);
           return;
         }
 
-        // Clear any old data and store the new token and user info
+        // Clear previous session data
         localStorage.clear();
+
+        // Store the new token and essential user info
         localStorage.setItem("token", token);
-        localStorage.setItem("userName", userName);
-        localStorage.setItem("role", role);
+        localStorage.setItem("userName", user.userName);
+        localStorage.setItem("role", user.role);
+        localStorage.setItem("userRecordId", user.id); // The airtable_id
+
+        // If the user is NOT an admin, store all the IDs they need
+        if (user.role !== 'admin') {
+          localStorage.setItem("accountIds", JSON.stringify(user.accounts || []));
+          localStorage.setItem("projectIds", JSON.stringify(user.projects || []));
+          localStorage.setItem("updateIds", JSON.stringify(user.updates || []));
+          localStorage.setItem("taskIds", JSON.stringify(user.tasksAssignedTo || []));
+          localStorage.setItem("createdTaskIds", JSON.stringify(user.tasksCreatedBy || []));
+        }
 
         setLoading(false);
 
-        // Redirect based on the user's role from the backend
-        if (role === 'admin') {
+        // Redirect based on the user's role
+        if (user.role === 'admin') {
           navigate("/admin");
         } else {
-          navigate("/"); // Or your regular user dashboard route
+          navigate("/"); // Redirect regular users to their main dashboard
         }
 
       } catch (err) {
@@ -59,7 +71,7 @@ export default function Login() {
     <>
       <Navbar />
       <div className="min-h-[80vh] flex items-center justify-center bg-card px-4 sm:px-6 lg:px-8">
-        <motion.div
+        <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -77,29 +89,19 @@ export default function Login() {
             </p>
           </div>
           <form className="space-y-6 w-full" autoComplete="off" onSubmit={e => e.preventDefault()}>
-            <div>
-              <label htmlFor="secretKey" className="sr-only">
-                Secret Key
-              </label>
-              <input
-                id="secretKey"
-                {...register("secretKey")}
-                type="password"
-                placeholder="● ● ● ● ● ●"
-                className="block w-full rounded-lg border border-border bg-secondary shadow-sm focus:border-primary focus:ring-primary text-foreground placeholder-muted-foreground py-4 px-5 text-center tracking-[1.5em] text-2xl font-mono placeholder:tracking-normal"
-                disabled={loading}
-                autoFocus
-                maxLength={6}
-                ref={inputRef}
-                onChange={handleInputChange}
-                inputMode="numeric"
-                pattern="\d*"
-                spellCheck="false"
-              />
-              {errors.secretKey && (
-                <span className="text-red-500 text-sm mt-2 block text-center">{errors.secretKey.message}</span>
-              )}
-            </div>
+            <input
+              id="secretKey"
+              {...register("secretKey")}
+              type="password"
+              placeholder="● ● ● ● ● ●"
+              className="block w-full rounded-lg border border-border bg-secondary shadow-sm focus:border-primary focus:ring-primary text-foreground placeholder-muted-foreground py-4 px-5 text-center tracking-[1.5em] text-2xl font-mono placeholder:tracking-normal"
+              disabled={loading}
+              autoFocus
+              maxLength={6}
+              ref={inputRef}
+              onChange={handleInputChange}
+              inputMode="numeric"
+            />
           </form>
           {loginError && (
             <div className="text-red-500 text-center text-sm font-medium">{loginError}</div>
@@ -109,14 +111,6 @@ export default function Login() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
             </div>
           )}
-          <div className="text-center">
-            <p className="text-xs text-muted-foreground mt-6 max-w-xs mx-auto leading-relaxed">
-              Ask your administrator for your key.
-            </p>
-            <p className="text-xs text-yellow-500/80 mt-2 font-medium max-w-xs mx-auto leading-relaxed">
-              Please <span className="underline">do not share</span> your secret key with anyone.
-            </p>
-          </div>
         </motion.div>
       </div>
       <Footer />
