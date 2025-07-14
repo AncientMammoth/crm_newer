@@ -1,4 +1,4 @@
-const db = require('../db'); // Adjust path if your db connection file is elsewhere
+const db = require('../db'); // Ensure this path is correct for your project structure
 
 module.exports = async (req, res) => {
   // Ensure this is a POST request
@@ -22,28 +22,34 @@ module.exports = async (req, res) => {
     }
     const user = userResult.rows[0];
 
-    // 2. Fetch all associated data for that user
-    const accountsQuery = 'SELECT id FROM accounts WHERE user_id = $1';
-    const projectsQuery = 'SELECT id FROM projects WHERE user_id = $1';
+    // 2. Fetch the user's accounts using the correct 'owner_id' column
+    const accountsQuery = 'SELECT id FROM accounts WHERE owner_id = $1';
+    const accountsResult = await db.query(accountsQuery, [user.id]);
+    const userAccountIds = accountsResult.rows.map(a => a.id);
+
+    // 3. Fetch projects associated with those accounts
+    let projectsResult = { rows: [] };
+    if (userAccountIds.length > 0) {
+        const projectsQuery = 'SELECT id FROM projects WHERE account_id = ANY($1::int[])';
+        projectsResult = await db.query(projectsQuery, [userAccountIds]);
+    }
+    
+    // 4. Fetch tasks and updates using the correct foreign key columns
     const tasksAssignedQuery = 'SELECT id FROM tasks WHERE assigned_to_id = $1';
     const tasksCreatedQuery = 'SELECT id FROM tasks WHERE created_by_id = $1';
-    const updatesQuery = 'SELECT id FROM updates WHERE user_id = $1';
+    const updatesQuery = 'SELECT id FROM updates WHERE update_owner_id = $1';
 
     const [
-      accountsResult,
-      projectsResult,
       tasksAssignedResult,
       tasksCreatedResult,
       updatesResult
     ] = await Promise.all([
-      db.query(accountsQuery, [user.id]),
-      db.query(projectsQuery, [user.id]),
       db.query(tasksAssignedQuery, [user.id]),
       db.query(tasksCreatedQuery, [user.id]),
       db.query(updatesQuery, [user.id])
     ]);
 
-    // 3. Send the complete payload back to the frontend
+    // 5. Send the complete, correctly structured payload back to the frontend
     res.status(200).json({
       user: {
         airtable_id: user.airtable_id,
@@ -59,6 +65,6 @@ module.exports = async (req, res) => {
 
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 };
