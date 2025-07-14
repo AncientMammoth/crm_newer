@@ -1,3 +1,15 @@
+import axios from 'axios';
+
+// --- Axios API Client (NEW) ---
+// This creates and exports the 'api' object that your Login component needs.
+// It resolves the error "does not provide an export named 'api'".
+export const api = axios.create({
+  baseURL: '/api', 
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 // Generic API request helper for your new backend
 async function apiRequest(path, options = {}) {
   const url = `/api/${path}`;
@@ -62,12 +74,6 @@ const formatTask = (task) => ({
     }
 });
 
-/**
- * Formats an update object from the backend to the structure expected by the frontend.
- * This now includes the account name for display purposes.
- * @param {object} update - The update object from the backend.
- * @returns {object} The formatted update object.
- */
 const formatUpdate = (update) => ({
     id: update.id, // Use numerical id
     fields: {
@@ -79,7 +85,6 @@ const formatUpdate = (update) => ({
         "Update Owner Name": update.update_owner_name ? [update.update_owner_name] : [],
         "Project Name": update.project_name,
         "Task Name": update.task_name,
-        // The new field is mapped here for display on the frontend
         "Account Name": update.update_account,
     }
 });
@@ -89,29 +94,32 @@ const formatUpdate = (update) => ({
 // RE-IMPLEMENTED API FUNCTIONS
 // =================================================================
 
-// === USER AUTH (Unchanged) ===
+// === USER AUTH (Fixed) ===
+// Renamed this function back to 'fetchUserBySecretKey' to match the import in Login.jsx
 export async function fetchUserBySecretKey(secretKey) {
   try {
-    // This still uses the `airtable_id` as the secret key
-    const userFromDb = await apiRequest(`users/by-secret-key/${secretKey}`);
-    if (!userFromDb) return null;
+    // A single API call to the backend login route
+    const response = await api.post('/auth/login', { secretKey });
+    const { user, accounts, projects, tasks_assigned_to, tasks_created_by, updates } = response.data;
     
+    // Format the data to match the structure your frontend expects
     return {
-      id: userFromDb.airtable_id, // The user's primary ID on the frontend is their airtable_id
+      id: user.airtable_id, // The user's primary ID on the frontend is their airtable_id
+      user_type: user.user_type, // The crucial new field for admin checks
       fields: {
-        "User Name": userFromDb.user_name,
-        "Accounts": userFromDb.accounts,
-        "Projects": userFromDb.projects,
-        "Tasks (Assigned To)": userFromDb.tasks_assigned_to,
-        "Tasks (Created By)": userFromDb.tasks_created_by,
-        "Updates": userFromDb.updates,
+        "User Name": user.user_name,
+        "Accounts": accounts.map(a => a.id),
+        "Projects": projects.map(p => p.id),
+        "Tasks (Assigned To)": tasks_assigned_to.map(t => t.id),
+        "Tasks (Created By)": tasks_created_by.map(t => t.id),
+        "Updates": updates.map(u => u.id),
       }
     };
   } catch (err) {
-    if (err.message.includes("404")) return null;
-    throw err;
+    console.error("Authentication error in api/index.js:", err);
+    throw err; // Re-throw to be handled by the Login component
   }
-}
+};
 
 export async function fetchAllUsers() {
     const users = await apiRequest("users");
@@ -177,9 +185,36 @@ export const createTask = (fields) => createRecord("Tasks", fields);
 export const createUpdate = (fields) => createRecord("Updates", fields);
 
 // === UPDATE FUNCTIONS ===
-// Note: updateUser still uses the airtable_id, which is correct in this hybrid model.
 export const updateUser = (userId, fields) => updateRecord("Users", userId, fields);
 export const updateTask = (taskId, fields) => updateRecord("Tasks", taskId, fields);
+
+// =================================================================
+// ADMIN API FUNCTIONS (NEW)
+// =================================================================
+
+export async function fetchAllProjectsForAdmin() {
+  const projects = await apiRequest("admin/projects");
+  return projects.map(formatProject);
+}
+
+export async function fetchAllTasksForAdmin() {
+  const tasks = await apiRequest("admin/tasks");
+  return tasks.map(formatTask);
+}
+
+export async function fetchAllUsersForAdmin() {
+    const users = await apiRequest("admin/users");
+    return users.map(user => ({
+        id: user.airtable_id,
+        fields: {
+            "User Name": user.user_name,
+            "Email": user.email,
+            "User Type": user.user_type,
+            "Secret Key": user.airtable_id,
+        }
+    }));
+}
+
 
 // === CLIENT-SIDE LOGIC (Kept for compatibility) ===
 

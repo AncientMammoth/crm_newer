@@ -1,17 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import React, { useState, useRef } from "react";
-import { fetchUserBySecretKey } from "../api";
+// Import the original Airtable fetch function and the new API handler
+import { fetchUserBySecretKey, api } from "../api"; 
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import { motion } from 'framer-motion';
 import { LockClosedIcon } from '@heroicons/react/24/outline';
-
-
-// Define your admin's secret key here.
-// In a real app, this should be stored securely as an environment variable.
-const ADMIN_SECRET_KEY = "123456"; // Replace with your actual admin key
-
 
 export default function Login() {
   const navigate = useNavigate();
@@ -28,6 +23,8 @@ export default function Login() {
       setLoginError("");
       setLoading(true);
       try {
+        // Step 1: Validate the secret key against Airtable to get user data.
+        // This part of the logic remains as it was, to populate localStorage.
         const user = await fetchUserBySecretKey(value);
         if (!user) {
           setLoginError("Invalid secret key. Please try again.");
@@ -39,16 +36,18 @@ export default function Login() {
           return;
         }
 
-        localStorage.clear();
+        // Step 2: Secret key is valid. Now verify user role from your GCP Postgres database.
+        // We send the secret key itself for verification.
+        const response = await api.post('/auth/verify', { secretKey: value });
+        const { user_type } = response.data;
 
-        // Check if the entered key is the admin key
-        if (value === ADMIN_SECRET_KEY) {
-            localStorage.setItem("isAdmin", "true");
-            console.log("Admin user logged in.");
-        } else {
-            localStorage.setItem("isAdmin", "false");
+        if (!user_type) {
+          // This error means the key was in Airtable but not in your Postgres `users` table.
+          throw new Error("User role could not be determined from the database.");
         }
 
+        // Both checks passed. Clear previous session and set new data in localStorage.
+        localStorage.clear();
         localStorage.setItem("userName", user.fields["User Name"] || "User");
         localStorage.setItem("secretKey", value);
         localStorage.setItem("userRecordId", user.id);
@@ -57,10 +56,23 @@ export default function Login() {
         localStorage.setItem("updateIds", JSON.stringify(user.fields.Updates || []));
         localStorage.setItem("taskIds", JSON.stringify(user.fields["Tasks (Assigned To)"] || []));
         localStorage.setItem("createdTaskIds", JSON.stringify(user.fields["Tasks (Created By)"] || []));
+        
         setLoading(false);
-        navigate("/");
+
+        // Step 3: Redirect based on the user_type from the database.
+        if (user_type === 'admin') {
+          localStorage.setItem("isAdmin", "true");
+          console.log("Admin user verified. Redirecting to admin dashboard.");
+          navigate("/admin/dashboard");
+        } else {
+          localStorage.setItem("isAdmin", "false");
+          console.log("Regular user verified. Redirecting to homepage.");
+          navigate("/");
+        }
+
       } catch (err) {
-        setLoginError("Authentication failed. Please check your connection and try again.");
+        console.error("Authentication failed:", err);
+        setLoginError("Authentication failed. Please check your key and try again.");
         setValue("secretKey", "");
         if(inputRef.current) {
             inputRef.current.value = "";

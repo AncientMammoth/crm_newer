@@ -16,7 +16,10 @@ import TasksRouter from "./pages/TasksRouter";
 import CreateTask from "./pages/CreateTask"; // Make sure this is imported
 import Tasks from './pages/Tasks';
 import TaskDetail from './pages/TaskDetail';
-
+import AdminDashboard from './pages/AdminDashboard';
+import AdminUserList from './pages/AdminUserList';
+import AdminProjectList from './pages/AdminProjectList';
+import AdminTaskList from './pages/AdminTaskList';
 
 function PrivateRoute({ children }) {
   const secretKey = localStorage.getItem("secretKey");
@@ -59,6 +62,10 @@ export default function App() {
         <Route path="create-task" element={<CreateTask />} />
         <Route path="/my-tasks" element={<Tasks />} />
         <Route path="/tasks/:taskId" element={<TaskDetail />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/users" element={<AdminUserList />} />
+        <Route path="/admin/projects" element={<AdminProjectList />} />
+        <Route path="/admin/tasks" element={<AdminTaskList />} />
       </Route>
     </Routes>
   );

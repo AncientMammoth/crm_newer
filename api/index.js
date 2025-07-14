@@ -3,11 +3,15 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const db = require("./db");
 
+const adminRoutes = require('./routes/admin');
+
+
 const app = express();
 const PORT = 4003;
 
 app.use(cors());
 app.use(bodyParser.json());
+app.use('/api/admin', adminRoutes);
 
 const sendError = (res, message, err) => {
   console.error(message, err);
