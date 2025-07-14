@@ -1,40 +1,78 @@
 import React, { useState, useEffect } from 'react';
-import AdminNavbar from '../components/layout/AdminNavbar';
-import { api } from '../api';
+import { fetchAllProjectsForAdmin } from '../api';
 
-const AdminProjectList = () => {
+export default function AdminProjectList() {
   const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchProjects = async () => {
+    const loadProjects = async () => {
       try {
-        const response = await api.get('/admin/projects');
-        setProjects(response.data);
-      } catch (error) {
-        console.error('Error fetching projects:', error);
+        setLoading(true);
+        const fetchedProjects = await fetchAllProjectsForAdmin();
+        setProjects(fetchedProjects);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching projects:", err);
+        setError("Could not load project data.");
+      } finally {
+        setLoading(false);
       }
     };
-    fetchProjects();
+    loadProjects();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-center text-red-500 bg-red-100 border border-red-400 p-4 rounded-lg">{error}</div>;
+  }
+
   return (
-    <div>
-      <AdminNavbar />
-      <div className="p-4">
-        <h1 className="text-2xl font-bold mb-4">Projects</h1>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <ul>
-            {projects.map((project) => (
-              <li key={project.id} className="border-b py-2">
-                <p className="font-bold">{project.name}</p>
-                <p>Description: {project.description}</p>
-              </li>
-            ))}
-          </ul>
+    <div className="px-4 sm:px-0">
+      <div className="sm:flex sm:items-center">
+        <div className="sm:flex-auto">
+          <h1 className="text-2xl font-bold text-foreground">Projects</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            A list of all projects across all accounts in the system.
+          </p>
+        </div>
+      </div>
+      <div className="mt-8 flow-root">
+        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+          <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+            <div className="overflow-hidden shadow ring-1 ring-border ring-opacity-5 sm:rounded-lg">
+              <table className="min-w-full divide-y divide-border">
+                <thead className="bg-secondary/50">
+                  <tr>
+                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-foreground sm:pl-6">Project Name</th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Account</th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Status</th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Value</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border bg-card">
+                  {projects.map((project) => (
+                    <tr key={project.id}>
+                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-foreground sm:pl-6">{project.fields['Project Name']}</td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{project.fields['Account Name (from Account)']?.[0] || 'N/A'}</td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{project.fields['Project Status']}</td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">${(project.fields['Project Value'] || 0).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default AdminProjectList;
+}
