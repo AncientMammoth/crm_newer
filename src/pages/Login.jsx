@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import React, { useState, useRef } from "react";
-// Import the original Airtable fetch function and the new API handler
-import { fetchUserBySecretKey, api } from "../api"; 
+// The import for fetchUserBySecretKey is correct.
+import { fetchUserBySecretKey } from "../api"; 
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import { motion } from 'framer-motion';
@@ -23,11 +23,12 @@ export default function Login() {
       setLoginError("");
       setLoading(true);
       try {
-        // Step 1: Validate the secret key against Airtable to get user data.
-        // This part of the logic remains as it was, to populate localStorage.
+        // Step 1: Make a SINGLE call to the backend to get all user data.
         const user = await fetchUserBySecretKey(value);
-        if (!user) {
-          setLoginError("Invalid secret key. Please try again.");
+
+        if (!user || !user.user_type) {
+          // This error means the key was invalid or the response was incomplete.
+          setLoginError("Invalid secret key or user data not found.");
           setValue("secretKey", "");
           if(inputRef.current) {
             inputRef.current.value = "";
@@ -36,17 +37,7 @@ export default function Login() {
           return;
         }
 
-        // Step 2: Secret key is valid. Now verify user role from your GCP Postgres database.
-        // We send the secret key itself for verification.
-        const response = await api.post('/auth/verify', { secretKey: value });
-        const { user_type } = response.data;
-
-        if (!user_type) {
-          // This error means the key was in Airtable but not in your Postgres `users` table.
-          throw new Error("User role could not be determined from the database.");
-        }
-
-        // Both checks passed. Clear previous session and set new data in localStorage.
+        // Step 2: All checks passed. Clear previous session and set new data.
         localStorage.clear();
         localStorage.setItem("userName", user.fields["User Name"] || "User");
         localStorage.setItem("secretKey", value);
@@ -59,8 +50,8 @@ export default function Login() {
         
         setLoading(false);
 
-        // Step 3: Redirect based on the user_type from the database.
-        if (user_type === 'admin') {
+        // Step 3: Redirect based on the user_type from the SINGLE API response.
+        if (user.user_type === 'admin') {
           localStorage.setItem("isAdmin", "true");
           console.log("Admin user verified. Redirecting to admin dashboard.");
           navigate("/admin/dashboard");
