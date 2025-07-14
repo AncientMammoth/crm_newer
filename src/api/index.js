@@ -2,7 +2,6 @@ import axios from 'axios';
 
 // --- Axios API Client (NEW) ---
 // This creates and exports the 'api' object that your Login component needs.
-// It resolves the error "does not provide an export named 'api'".
 export const api = axios.create({
   baseURL: '/api', 
   headers: {
@@ -10,20 +9,31 @@ export const api = axios.create({
   },
 });
 
+// --- (NEW) Axios Interceptor for Security ---
+// This automatically adds the user's secret key to the headers of every
+// request made to the backend. This is crucial for verifying admin access.
+api.interceptors.request.use(config => {
+  const secretKey = localStorage.getItem('secretKey');
+  if (secretKey) {
+    config.headers['x-secret-key'] = secretKey;
+  }
+  return config;
+}, error => {
+  return Promise.reject(error);
+});
+
+
 // Generic API request helper for your new backend
 async function apiRequest(path, options = {}) {
   const url = `/api/${path}`;
   try {
-    const res = await fetch(url, {
+    // We use the new 'api' object here to ensure headers are included
+    const res = await api({
+      url: path,
       method: options.method || "GET",
-      headers: { "Content-Type": "application/json" },
-      body: options.body ? JSON.stringify(options.body) : undefined,
+      data: options.body,
     });
-    if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.error || `Request failed with status ${res.status}`);
-    }
-    return res.status === 204 ? null : await res.json();
+    return res.data;
   } catch (err) {
     console.error(`[App API] Error for ${url}:`, err);
     throw err;
