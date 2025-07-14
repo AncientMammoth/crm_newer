@@ -62,7 +62,7 @@ export default function AdminNavbar() {
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeftOnRectangleIcon className="h-5 w-5" />
-              <span>Back to Site</span>
+              <span></span>
             </Link>
           </div>
         </div>
