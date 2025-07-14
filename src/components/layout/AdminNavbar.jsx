@@ -56,15 +56,7 @@ export default function AdminNavbar() {
               </div>
             </div>
           </div>
-          <div className="hidden md:block">
-            <Link
-              to="/"
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeftOnRectangleIcon className="h-5 w-5" />
-              <span></span>
-            </Link>
-          </div>
+          
         </div>
       </div>
     </nav>
