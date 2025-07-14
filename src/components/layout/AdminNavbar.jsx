@@ -2,10 +2,6 @@ import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { ShieldCheckIcon, ArrowLeftOnRectangleIcon } from '@heroicons/react/24/outline';
 
-/**
- * Navigation bar for the admin section.
- * Provides links to different admin pages and a way to return to the main site.
- */
 export default function AdminNavbar() {
   const activeLinkClass = "bg-secondary text-foreground";
   const inactiveLinkClass = "text-muted-foreground hover:bg-secondary/80 hover:text-foreground";
@@ -34,6 +30,12 @@ export default function AdminNavbar() {
                   Users
                 </NavLink>
                 <NavLink
+                  to="/admin/accounts"
+                  className={({ isActive }) => `${isActive ? activeLinkClass : inactiveLinkClass} px-3 py-2 rounded-md text-sm font-medium transition-colors`}
+                >
+                  Accounts
+                </NavLink>
+                <NavLink
                   to="/admin/projects"
                   className={({ isActive }) => `${isActive ? activeLinkClass : inactiveLinkClass} px-3 py-2 rounded-md text-sm font-medium transition-colors`}
                 >
@@ -44,6 +46,12 @@ export default function AdminNavbar() {
                   className={({ isActive }) => `${isActive ? activeLinkClass : inactiveLinkClass} px-3 py-2 rounded-md text-sm font-medium transition-colors`}
                 >
                   Tasks
+                </NavLink>
+                <NavLink
+                  to="/admin/updates"
+                  className={({ isActive }) => `${isActive ? activeLinkClass : inactiveLinkClass} px-3 py-2 rounded-md text-sm font-medium transition-colors`}
+                >
+                  Updates
                 </NavLink>
               </div>
             </div>

@@ -6,7 +6,7 @@ const app = express();
 
 // --- Middleware ---
 app.use(cors());
-app.use(express.json()); // Modern replacement for bodyParser
+app.use(express.json());
 
 // --- Helper Functions ---
 const sendError = (res, message, err) => {
@@ -14,7 +14,7 @@ const sendError = (res, message, err) => {
   res.status(500).json({ error: message, details: err.message });
 };
 
-// --- Admin Authentication Middleware (Crucial for Security) ---
+// --- Admin Authentication Middleware ---
 const adminAuth = async (req, res, next) => {
   const secretKey = req.headers['x-secret-key'];
   if (!secretKey) {
@@ -33,10 +33,8 @@ const adminAuth = async (req, res, next) => {
   }
 };
 
-
 // =================================================================
-// --- NEW LOGIN ENDPOINT ---
-// This replaces the old '/api/users/by-secret-key/:key' for a more secure and comprehensive login
+// --- LOGIN ENDPOINT ---
 // =================================================================
 app.post("/api/auth/login", async (req, res) => {
     const { secretKey } = req.body;
@@ -44,7 +42,6 @@ app.post("/api/auth/login", async (req, res) => {
         return res.status(400).json({ error: "Secret key is required." });
     }
     try {
-        // 1. Get the core user details
         const userQuery = 'SELECT * FROM users WHERE airtable_id = $1';
         const userResult = await db.query(userQuery, [secretKey]);
         if (userResult.rows.length === 0) {
@@ -52,7 +49,6 @@ app.post("/api/auth/login", async (req, res) => {
         }
         const user = userResult.rows[0];
 
-        // 2. Fetch all associated IDs in parallel
         const accountsQuery = 'SELECT id FROM accounts WHERE account_owner_id = $1';
         const projectsQuery = 'SELECT id FROM projects WHERE project_owner_id = $1';
         const tasksAssignedQuery = 'SELECT id FROM tasks WHERE assigned_to_id = $1';
@@ -73,7 +69,6 @@ app.post("/api/auth/login", async (req, res) => {
             db.query(updatesQuery, [user.id])
         ]);
 
-        // 3. Respond with the complete data structure the frontend needs
         res.status(200).json({
             user: {
                 airtable_id: user.airtable_id,
@@ -86,23 +81,33 @@ app.post("/api/auth/login", async (req, res) => {
             tasks_created_by: tasksCreatedResult.rows,
             updates: updatesResult.rows,
         });
-
     } catch (err) {
         sendError(res, "Login failed.", err);
     }
 });
-
 
 // =================================================================
 // --- ADMIN ROUTES (Protected) ---
 // =================================================================
 app.get("/api/admin/users", adminAuth, async (req, res) => {
     try {
-        // Corrected Query: Removed the non-existent 'email' column
         const result = await db.query('SELECT id, user_name, user_type, airtable_id FROM users');
         res.status(200).json(result.rows);
     } catch (error) {
         sendError(res, "Failed to fetch admin users.", error);
+    }
+});
+
+app.get("/api/admin/accounts", adminAuth, async (req, res) => {
+    try {
+        const result = await db.query(`
+            SELECT a.*, u.user_name as account_owner_name 
+            FROM accounts a
+            LEFT JOIN users u ON a.account_owner_id = u.id
+        `);
+        res.status(200).json(result.rows);
+    } catch (error) {
+        sendError(res, "Failed to fetch admin accounts.", error);
     }
 });
 
@@ -124,9 +129,23 @@ app.get("/api/admin/tasks", adminAuth, async (req, res) => {
     }
 });
 
+app.get("/api/admin/updates", adminAuth, async (req, res) => {
+    try {
+        const result = await db.query(`
+            SELECT u.*, p.project_name, owner.user_name as update_owner_name
+            FROM updates u
+            LEFT JOIN projects p ON u.project_id = p.id
+            LEFT JOIN users owner ON u.update_owner_id = owner.id
+            ORDER BY u.date DESC, u.created_at DESC
+        `);
+        res.status(200).json(result.rows);
+    } catch (error) {
+        sendError(res, "Failed to fetch admin updates.", error);
+    }
+});
 
 // =================================================================
-// --- EXISTING REGULAR USER ENDPOINTS (Unchanged) ---
+// --- REGULAR USER ENDPOINTS ---
 // =================================================================
 
 app.get("/api/users", async (req, res) => {

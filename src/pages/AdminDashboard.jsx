@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { UsersIcon, BriefcaseIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
-import { fetchAllUsersForAdmin, fetchAllProjectsForAdmin, fetchAllTasksForAdmin } from '../api';
+import { UsersIcon, BriefcaseIcon, ClipboardDocumentListIcon, BuildingOffice2Icon, ChatBubbleBottomCenterTextIcon } from '@heroicons/react/24/outline';
+import { fetchAllUsersForAdmin, fetchAllProjectsForAdmin, fetchAllTasksForAdmin, fetchAllAccountsForAdmin, fetchAllUpdatesForAdmin } from '../api';
 
 const StatCard = ({ title, value, icon, to }) => (
   <Link to={to} className="bg-secondary/50 border border-border rounded-xl p-6 flex items-center justify-between hover:border-primary/80 hover:bg-secondary transition-all duration-300">
@@ -15,9 +15,8 @@ const StatCard = ({ title, value, icon, to }) => (
   </Link>
 );
 
-
 export default function AdminDashboard() {
-  const [stats, setStats] = useState({ userCount: 0, projectCount: 0, taskCount: 0 });
+  const [stats, setStats] = useState({ userCount: 0, projectCount: 0, taskCount: 0, accountCount: 0, updateCount: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -25,15 +24,19 @@ export default function AdminDashboard() {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const [users, projects, tasks] = await Promise.all([
+        const [users, projects, tasks, accounts, updates] = await Promise.all([
           fetchAllUsersForAdmin(),
           fetchAllProjectsForAdmin(),
-          fetchAllTasksForAdmin()
+          fetchAllTasksForAdmin(),
+          fetchAllAccountsForAdmin(),
+          fetchAllUpdatesForAdmin()
         ]);
         setStats({
           userCount: users.length,
           projectCount: projects.length,
-          taskCount: tasks.length
+          taskCount: tasks.length,
+          accountCount: accounts.length,
+          updateCount: updates.length
         });
         setError(null);
       } catch (err) {
@@ -76,6 +79,12 @@ export default function AdminDashboard() {
           to="/admin/users"
         />
         <StatCard 
+          title="Total Accounts" 
+          value={stats.accountCount} 
+          icon={<BuildingOffice2Icon className="h-8 w-8 text-primary" />}
+          to="/admin/accounts"
+        />
+        <StatCard 
           title="Total Projects" 
           value={stats.projectCount} 
           icon={<BriefcaseIcon className="h-8 w-8 text-primary" />}
@@ -87,9 +96,14 @@ export default function AdminDashboard() {
           icon={<ClipboardDocumentListIcon className="h-8 w-8 text-primary" />}
           to="/admin/tasks"
         />
+        <StatCard 
+          title="Total Updates" 
+          value={stats.updateCount} 
+          icon={<ChatBubbleBottomCenterTextIcon className="h-8 w-8 text-primary" />}
+          to="/admin/updates"
+        />
       </div>
 
-      {/* You can add more sections here, like recent activity or charts */}
       <div className="bg-secondary/50 border border-border rounded-xl p-6">
         <h2 className="text-xl font-semibold text-foreground">Welcome, Admin!</h2>
         <p className="mt-2 text-muted-foreground">

@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-// --- Axios API Client (NEW) ---
-// This creates and exports the 'api' object that your Login component needs.
+// --- Axios API Client ---
 export const api = axios.create({
   baseURL: '/api', 
   headers: {
@@ -9,9 +8,7 @@ export const api = axios.create({
   },
 });
 
-// --- (NEW) Axios Interceptor for Security ---
-// This automatically adds the user's secret key to the headers of every
-// request made to the backend. This is crucial for verifying admin access.
+// --- Axios Interceptor for Security ---
 api.interceptors.request.use(config => {
   const secretKey = localStorage.getItem('secretKey');
   if (secretKey) {
@@ -22,20 +19,17 @@ api.interceptors.request.use(config => {
   return Promise.reject(error);
 });
 
-
-// Generic API request helper for your new backend
+// --- Generic API Request Helper (Corrected) ---
 async function apiRequest(path, options = {}) {
-  const url = `/api/${path}`;
   try {
-    // We use the new 'api' object here to ensure headers are included
-    const res = await api({
+    const response = await api({
       url: path,
-      method: options.method || "GET",
+      method: options.method || 'GET',
       data: options.body,
     });
-    return res.data;
+    return response.data;
   } catch (err) {
-    console.error(`[App API] Error for ${url}:`, err);
+    console.error(`[App API] Error for /api/${path}:`, err);
     throw err;
   }
 }
@@ -45,17 +39,18 @@ async function apiRequest(path, options = {}) {
 // =================================================================
 
 const formatAccount = (acc) => ({
-    id: acc.id, // Use numerical id
+    id: acc.id,
     fields: {
         "Account Name": acc.account_name,
         "Account Description": acc.account_description,
         "Account Type": acc.account_type,
         "Projects": acc.projects || [],
+        "Account Owner Name": acc.account_owner_name, // Added for admin view
     }
 });
 
 const formatProject = (proj) => ({
-    id: proj.id, // Use numerical id
+    id: proj.id,
     fields: {
         "Project Name": proj.project_name,
         "Project Status": proj.project_status,
@@ -70,52 +65,46 @@ const formatProject = (proj) => ({
 });
 
 const formatTask = (task) => ({
-    id: task.id, // Use numerical id
+    id: task.id,
     fields: {
         "Task Name": task.task_name,
         "Description": task.description,
         "Status": task.status,
         "Due Date": task.due_date,
         "Project": task.project_id ? [task.project_id] : [],
-        "Project Name": task.project_name ? [task.project_name] : [],
+        "Project Name": task.project_name,
         "Assigned To": task.assigned_to_id ? [task.assigned_to_id] : [],
-        "Assigned To Name": task.assigned_to_name ? [task.assigned_to_name] : [],
+        "Assigned To Name": task.assigned_to_name,
         "Updates": task.updates || [],
     }
 });
 
 const formatUpdate = (update) => ({
-    id: update.id, // Use numerical id
+    id: update.id,
     fields: {
         "Notes": update.notes,
         "Date": update.date,
         "Update Type": update.update_type,
         "Project": update.project_id ? [update.project_id] : [],
         "Task": update.task_id ? [update.task_id] : [],
-        "Update Owner Name": update.update_owner_name ? [update.update_owner_name] : [],
+        "Update Owner Name": update.update_owner_name,
         "Project Name": update.project_name,
         "Task Name": update.task_name,
         "Account Name": update.update_account,
     }
 });
 
-
 // =================================================================
-// RE-IMPLEMENTED API FUNCTIONS
+// API FUNCTIONS
 // =================================================================
 
-// === USER AUTH (Fixed) ===
-// Renamed this function back to 'fetchUserBySecretKey' to match the import in Login.jsx
 export async function fetchUserBySecretKey(secretKey) {
   try {
-    // A single API call to the backend login route
     const response = await api.post('/auth/login', { secretKey });
     const { user, accounts, projects, tasks_assigned_to, tasks_created_by, updates } = response.data;
-    
-    // Format the data to match the structure your frontend expects
     return {
-      id: user.airtable_id, // The user's primary ID on the frontend is their airtable_id
-      user_type: user.user_type, // The crucial new field for admin checks
+      id: user.airtable_id,
+      user_type: user.user_type,
       fields: {
         "User Name": user.user_name,
         "Accounts": accounts.map(a => a.id),
@@ -127,30 +116,25 @@ export async function fetchUserBySecretKey(secretKey) {
     };
   } catch (err) {
     console.error("Authentication error in api/index.js:", err);
-    throw err; // Re-throw to be handled by the Login component
+    throw err;
   }
 };
 
 export async function fetchAllUsers() {
     const users = await apiRequest("users");
-    // The component expects an `id` field which is the airtable_id for users
     return users.map(u => ({ id: u.airtable_id, fields: { "User Name": u.user_name } }));
 }
-
-// === GENERIC CUD HELPERS ===
 
 export async function createRecord(table, fields) {
   const endpoint = table.toLowerCase();
   const result = await apiRequest(endpoint, { method: 'POST', body: fields });
-  return { id: result.id, fields: result }; // Returns numerical ID for new records
+  return { id: result.id, fields: result };
 }
 
 export async function updateRecord(table, id, fields) {
   const endpoint = `${table.toLowerCase()}/${id}`;
   return await apiRequest(endpoint, { method: 'PATCH', body: fields });
 }
-
-// === BULK FETCHING BY ARRAY OF IDs ===
 
 export async function fetchAccountsByIds(ids = []) {
   if (!ids || ids.length === 0) return [];
@@ -182,25 +166,34 @@ export async function fetchUpdatesByProjectId(projectId) {
     return updates.map(formatUpdate);
 }
 
-// === SINGULAR FETCHES ===
 export const fetchAccountById = async (id) => (await fetchAccountsByIds([id]))[0] || null;
 export const fetchProjectById = async (id) => (await fetchProjectsByIds([id]))[0] || null;
 export const fetchUpdateById = async (id) => (await fetchUpdatesByIds([id]))[0] || null;
 export const fetchTaskById = async (id) => (await fetchTasksByIds([id]))[0] || null;
 
-// === CREATION FUNCTIONS ===
 export const createAccount = (fields) => createRecord("Accounts", fields);
 export const createProject = (fields) => createRecord("Projects", fields);
 export const createTask = (fields) => createRecord("Tasks", fields);
 export const createUpdate = (fields) => createRecord("Updates", fields);
 
-// === UPDATE FUNCTIONS ===
 export const updateUser = (userId, fields) => updateRecord("Users", userId, fields);
 export const updateTask = (taskId, fields) => updateRecord("Tasks", taskId, fields);
 
 // =================================================================
-// ADMIN API FUNCTIONS (NEW)
+// ADMIN API FUNCTIONS
 // =================================================================
+
+export async function fetchAllUsersForAdmin() {
+    const users = await apiRequest("admin/users");
+    return users.map(user => ({
+        id: user.airtable_id,
+        fields: {
+            "User Name": user.user_name,
+            "User Type": user.user_type,
+            "Secret Key": user.airtable_id,
+        }
+    }));
+}
 
 export async function fetchAllProjectsForAdmin() {
   const projects = await apiRequest("admin/projects");
@@ -212,21 +205,19 @@ export async function fetchAllTasksForAdmin() {
   return tasks.map(formatTask);
 }
 
-export async function fetchAllUsersForAdmin() {
-    const users = await apiRequest("admin/users");
-    return users.map(user => ({
-        id: user.airtable_id,
-        fields: {
-            "User Name": user.user_name,
-            "Email": user.email,
-            "User Type": user.user_type,
-            "Secret Key": user.airtable_id,
-        }
-    }));
+export async function fetchAllAccountsForAdmin() {
+  const accounts = await apiRequest("admin/accounts");
+  return accounts.map(formatAccount);
 }
 
+export async function fetchAllUpdatesForAdmin() {
+  const updates = await apiRequest("admin/updates");
+  return updates.map(formatUpdate);
+}
 
-// === CLIENT-SIDE LOGIC (Kept for compatibility) ===
+// =================================================================
+// CLIENT-SIDE LOGIC
+// =================================================================
 
 export function formatDateForAirtable(dateInput) {
   if (!dateInput) return "";

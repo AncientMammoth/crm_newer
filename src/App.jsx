@@ -23,6 +23,8 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminUserList from './pages/AdminUserList';
 import AdminProjectList from './pages/AdminProjectList';
 import AdminTaskList from './pages/AdminTaskList';
+import AdminAccountList from './pages/AdminAccountList'; // New
+import AdminUpdateList from './pages/AdminUpdateList';   // New
 
 // A private route for any logged-in user
 function PrivateRoute({ children }) {
@@ -36,16 +38,13 @@ function PrivateRoute({ children }) {
 // A specific private route that checks for the 'isAdmin' flag
 function AdminPrivateRoute({ children }) {
     const isAdmin = localStorage.getItem("isAdmin") === "true";
-    // Also check if they are logged in at all
     const secretKey = localStorage.getItem("secretKey");
 
     if (!secretKey || !isAdmin) {
-        // If not an admin, or not logged in, redirect to login
         return <Navigate to="/login" />;
     }
     return children;
 }
-
 
 export default function App() {
   React.useEffect(() => {
@@ -56,7 +55,6 @@ export default function App() {
       <Route path="/login" element={<Login />} />
 
       {/* --- Regular User Routes --- */}
-      {/* All of your original routes for regular users are here, wrapped in the standard DashboardLayout */}
       <Route
         path="/"
         element={
@@ -82,7 +80,6 @@ export default function App() {
       </Route>
 
       {/* --- Admin Routes --- */}
-      {/* The admin routes are now correctly separated and wrapped in the AdminLayout */}
       <Route
         path="/admin"
         element={
@@ -93,8 +90,10 @@ export default function App() {
       >
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="users" element={<AdminUserList />} />
+        <Route path="accounts" element={<AdminAccountList />} />
         <Route path="projects" element={<AdminProjectList />} />
         <Route path="tasks" element={<AdminTaskList />} />
+        <Route path="updates" element={<AdminUpdateList />} />
       </Route>
 
     </Routes>
