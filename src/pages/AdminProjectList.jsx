@@ -64,7 +64,7 @@ export default function AdminProjectList() {
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-foreground sm:pl-6">{project.fields['Project Name']}</td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{project.fields['Account Name (from Account)']?.[0] || 'N/A'}</td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{project.fields['Project Status']}</td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">${(project.fields['Project Value'] || 0).toLocaleString()}</td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">₹{(project.fields['Project Value'] || 0).toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>
