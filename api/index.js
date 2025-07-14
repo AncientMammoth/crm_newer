@@ -98,7 +98,8 @@ app.post("/api/auth/login", async (req, res) => {
 // =================================================================
 app.get("/api/admin/users", adminAuth, async (req, res) => {
     try {
-        const result = await db.query('SELECT id, user_name, email, user_type, airtable_id FROM users');
+        // Corrected Query: Removed the non-existent 'email' column
+        const result = await db.query('SELECT id, user_name, user_type, airtable_id FROM users');
         res.status(200).json(result.rows);
     } catch (error) {
         sendError(res, "Failed to fetch admin users.", error);
