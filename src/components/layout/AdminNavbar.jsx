@@ -31,7 +31,7 @@ export default function AdminNavbar() {
       <div className="flex flex-1 items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo and Navigation Links */}
         <div className="flex items-center space-x-8">
-          <Link to="/" className="flex items-center space-x-2">
+          <Link to="/admin/dashboard" className="flex items-center space-x-2">
                       <img
                         className="h-8 w-auto"
                         src="/rian-logo-footer.svg"

@@ -33,6 +33,7 @@ const adminAuth = async (req, res, next) => {
   }
 };
 
+
 // =================================================================
 // --- LOGIN ENDPOINT ---
 // =================================================================
@@ -81,10 +82,12 @@ app.post("/api/auth/login", async (req, res) => {
             tasks_created_by: tasksCreatedResult.rows,
             updates: updatesResult.rows,
         });
+
     } catch (err) {
         sendError(res, "Login failed.", err);
     }
 });
+
 
 // =================================================================
 // --- ADMIN ROUTES (Protected) ---
@@ -113,7 +116,12 @@ app.get("/api/admin/accounts", adminAuth, async (req, res) => {
 
 app.get("/api/admin/projects", adminAuth, async (req, res) => {
     try {
-        const result = await db.query('SELECT * FROM projects');
+        // Corrected Query: Joined with 'accounts' to fetch the account_name
+        const result = await db.query(`
+            SELECT p.*, a.account_name
+            FROM projects p
+            LEFT JOIN accounts a ON p.account_id = a.id
+        `);
         res.status(200).json(result.rows);
     } catch (error) {
         sendError(res, "Failed to fetch admin projects.", error);
@@ -144,8 +152,9 @@ app.get("/api/admin/updates", adminAuth, async (req, res) => {
     }
 });
 
+
 // =================================================================
-// --- REGULAR USER ENDPOINTS ---
+// --- EXISTING REGULAR USER ENDPOINTS (Unchanged) ---
 // =================================================================
 
 app.get("/api/users", async (req, res) => {
