@@ -37,19 +37,17 @@ export default function AdminCreateTask() {
   // This effect runs whenever the selected user changes
   useEffect(() => {
     const fetchProjectsForUser = async () => {
-      // If no user is selected, clear the projects list
       if (!assignedToUserAirtableId) {
         setProjects([]);
-        setValue('projectId', ''); // Reset project field
+        setValue('projectId', '');
         return;
       }
       
       try {
         setIsProjectsLoading(true);
         setError(null);
-        setValue('projectId', ''); // Reset project field when user changes
+        setValue('projectId', '');
 
-        // Find the selected user's internal database ID
         const selectedUser = users.find(u => u.fields['Secret Key'] === assignedToUserAirtableId);
         if (!selectedUser) {
             setProjects([]);
@@ -58,7 +56,6 @@ export default function AdminCreateTask() {
 
         const userInternalId = selectedUser.id;
         
-        // Fetch only the projects owned by that user
         const fetchedProjects = await fetchAllProjectsForAdmin({ ownerId: userInternalId });
         setProjects(fetchedProjects);
       } catch (err) {
@@ -79,14 +76,15 @@ export default function AdminCreateTask() {
     
     const adminAirtableId = localStorage.getItem('userRecordId');
 
+    // --- FIX: Send IDs as single values, not arrays ---
     const taskData = {
       "Task Name": data.taskName,
       "Description": data.description,
-      "Project": [data.projectId],
-      "Assigned To": [data.assignedToId],
+      "Project": data.projectId,
+      "Assigned To": data.assignedToId,
       "Due Date": data.dueDate,
       "Status": data.status,
-      "Created By": [adminAirtableId],
+      "Created By": adminAirtableId,
     };
     
     try {
@@ -156,7 +154,9 @@ export default function AdminCreateTask() {
                                 ? "Select a user first" 
                                 : isProjectsLoading 
                                 ? "Loading projects..." 
-                                : "Select a project..."}
+                                : projects.length > 0
+                                ? "Select a project..."
+                                : "No projects for this user"}
                         </option>
                         {projects.map(project => <option key={project.id} value={project.id}>{project.fields['Project Name']}</option>)}
                     </select>
