@@ -7,7 +7,7 @@ import { fetchAllUsersForAdmin, fetchAllProjectsForAdmin, fetchAllTasksForAdmin,
 const StatCard = ({ title, value, icon, to }) => (
   <Link 
     to={to} 
-    className="bg-card border border-border rounded-xl p-6 flex items-center justify-between group hover:border-accent transition-all duration-300"
+    className="bg-[#333333] border border-border rounded-xl p-6 flex items-center justify-between group hover:border-accent transition-all duration-300"
   >
     <div>
       <p className="text-sm font-medium text-muted-foreground">{title}</p>
@@ -108,7 +108,7 @@ export default function AdminDashboard() {
         />
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-6">
+      <div className="bg-secondary border border-border rounded-xl p-6">
         <h2 className="text-xl font-semibold text-foreground">Welcome, Admin!</h2>
         <p className="mt-2 text-muted-foreground">
           From this panel, you can manage all users, oversee every project, and assign tasks. Use the navigation above to get started.
