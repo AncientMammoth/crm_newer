@@ -14,24 +14,6 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const inputRef = useRef();
 
-  // --- (NEW) This useEffect hook fixes the redirection issue ---
-  // It runs once when the component loads to check if a user is already logged in.
-  useEffect(() => {
-    const secretKey = localStorage.getItem("secretKey");
-    const isAdmin = localStorage.getItem("isAdmin") === "true";
-
-    if (secretKey) {
-      // If the user is an admin, redirect them to the admin dashboard.
-      if (isAdmin) {
-        navigate("/admin/dashboard");
-      } else {
-        // If they are a regular user, redirect them to the main dashboard.
-        navigate("/");
-      }
-    }
-    // If no secretKey is found, do nothing and show the login page.
-  }, [navigate]);
-
 
   const handleInputChange = async (e) => {
     const value = e.target.value.replace(/\D/g, "");
