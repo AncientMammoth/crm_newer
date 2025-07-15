@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { fetchAdminAccountDetail } from '../api';
 import { ArrowLeftIcon, BriefcaseIcon } from '@heroicons/react/24/outline';
 
@@ -8,6 +8,7 @@ export default function AdminAccountDetail() {
   const [accountData, setAccountData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate(); // Hook for navigation
 
   useEffect(() => {
     const loadAccountDetails = async () => {
@@ -80,7 +81,11 @@ export default function AdminAccountDetail() {
                             </thead>
                             <tbody className="divide-y divide-border bg-card">
                                 {projects.length > 0 ? projects.map((project) => (
-                                    <tr key={project.id}>
+                                    <tr 
+                                        key={project.id}
+                                        className="hover:bg-secondary/50 cursor-pointer"
+                                        onClick={() => navigate(`/admin/projects/${project.id}`)}
+                                    >
                                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-foreground sm:pl-6">{project.fields['Project Name']}</td>
                                         <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{project.fields['Project Status']}</td>
                                         <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{project.fields['Project Owner Name']}</td>
