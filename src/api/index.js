@@ -75,7 +75,8 @@ const formatTask = (task) => ({
         "Project": task.project_id ? [task.project_id] : [],
         "Project Name": task.project_name,
         "Assigned To": task.assigned_to_id ? [task.assigned_to_id] : [],
-        "Assigned To Name": task.assigned_to_name,
+        "Assigned To (Name)": task.assigned_to_name ? [task.assigned_to_name] : undefined, // Ensure field exists
+        "Created By (Name)": task.created_by_name ? [task.created_by_name] : undefined, // Ensure field exists
         "Updates": task.updates || [],
     }
 });
@@ -152,6 +153,19 @@ export async function fetchProjectsByIds(ids = []) {
 export async function fetchTasksByIds(ids = []) {
   if (!ids || ids.length === 0) return [];
   const tasks = await apiRequest(`tasks?ids=${ids.join(',')}`);
+  return tasks.map(formatTask);
+}
+
+/**
+ * --- NEW FUNCTION ---
+ * Fetches all tasks created by a specific user by their record ID.
+ * @param {string} creatorId - The Airtable record ID of the user who created the tasks.
+ * @returns {Array} An array of task objects.
+ */
+export async function fetchTasksByCreator(creatorId) {
+  if (!creatorId) return [];
+  // This assumes your backend has an endpoint like GET /api/tasks/by-creator/:id
+  const tasks = await apiRequest(`tasks/by-creator/${creatorId}`);
   return tasks.map(formatTask);
 }
 

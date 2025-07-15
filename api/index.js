@@ -262,7 +262,7 @@ app.get("/api/admin/updates", adminAuth, async (req, res) => {
 
 
 // =================================================================
-// --- EXISTING REGULAR USER ENDPOINTS (Unchanged) ---
+// --- REGULAR USER ENDPOINTS ---
 // =================================================================
 
 app.get("/api/users", async (req, res) => {
@@ -327,16 +327,15 @@ app.get("/api/tasks", async (req, res) => {
         if (!ids) return res.status(400).json({ error: "No IDs provided." });
         const idArray = ids.split(',').map(Number);
         const { rows } = await db.query(
-            `SELECT t.*, p.project_name, p.id as project_id, u.user_name as assigned_to_name, COALESCE(upd.updates, '[]'::json) as updates
+            `SELECT t.*, 
+                    p.project_name, 
+                    p.id as project_id, 
+                    u_assigned.user_name as assigned_to_name,
+                    u_creator.user_name as created_by_name
              FROM tasks t
              LEFT JOIN projects p ON t.project_id = p.id
-             LEFT JOIN users u ON t.assigned_to_id = u.id
-             LEFT JOIN (
-                 SELECT task_id, json_agg(json_build_object('id', up.id, 'notes', up.notes, 'date', up.date, 'update_type', up.update_type, 'update_owner_name', owner.user_name)) as updates
-                 FROM updates up
-                 LEFT JOIN users owner ON up.update_owner_id = owner.id
-                 GROUP BY task_id
-             ) upd ON upd.task_id = t.id
+             LEFT JOIN users u_assigned ON t.assigned_to_id = u_assigned.id
+             LEFT JOIN users u_creator ON t.created_by_id = u_creator.id
              WHERE t.id = ANY($1::integer[])`, [idArray]
         );
         res.json(rows);
@@ -344,6 +343,42 @@ app.get("/api/tasks", async (req, res) => {
         sendError(res, 'Failed to fetch tasks', err);
     }
 });
+
+// --- NEW ENDPOINT ADDED HERE ---
+app.get("/api/tasks/by-creator/:creatorId", async (req, res) => {
+    try {
+        const { creatorId } = req.params;
+        if (!creatorId) {
+            return res.status(400).json({ error: "Creator ID is required." });
+        }
+        
+        // Find the internal user ID from the provided Airtable ID (creatorId)
+        const userResult = await db.query('SELECT id FROM users WHERE airtable_id = $1', [creatorId]);
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: "Creator not found." });
+        }
+        const internalCreatorId = userResult.rows[0].id;
+
+        const { rows } = await db.query(
+            `SELECT t.*, 
+                    p.project_name, 
+                    p.id as project_id, 
+                    u_assigned.user_name as assigned_to_name,
+                    u_creator.user_name as created_by_name
+             FROM tasks t
+             LEFT JOIN projects p ON t.project_id = p.id
+             LEFT JOIN users u_assigned ON t.assigned_to_id = u_assigned.id
+             LEFT JOIN users u_creator ON t.created_by_id = u_creator.id
+             WHERE t.created_by_id = $1
+             ORDER BY t.created_at DESC`, 
+            [internalCreatorId]
+        );
+        res.json(rows);
+    } catch (err) {
+        sendError(res, 'Failed to fetch tasks by creator', err);
+    }
+});
+
 
 app.get("/api/updates", async (req, res) => {
     try {
