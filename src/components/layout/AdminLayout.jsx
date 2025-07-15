@@ -5,8 +5,8 @@ import Footer from './Footer';
 
 /**
  * The main layout for the admin section.
- * It now includes a simpler, faster fade transition for each page
- * to provide a smoother and less intrusive user experience.
+ * It now includes a smoother transition to match the regular user dashboard,
+ * providing a more consistent and polished user experience.
  */
 export default function AdminLayout() {
   const location = useLocation();
@@ -15,17 +15,17 @@ export default function AdminLayout() {
     <>
       <AdminNavbar />
       
-      <div className="min-h-[80vh] bg-background">
+      <div className="min-h-[80vh] bg-card">
         <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           {/* AnimatePresence ensures smooth transitions between different pages */}
           <AnimatePresence mode="wait">
             <motion.div
               // The key is crucial for AnimatePresence to detect page changes
               key={location.pathname}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }} // Using a quicker, simpler fade
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5, ease: 'easeInOut' }}
             >
               <Outlet />
             </motion.div>
