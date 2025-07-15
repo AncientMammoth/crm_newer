@@ -82,7 +82,7 @@ export default function AdminAccountList() {
           <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
             <div className="overflow-hidden shadow ring-1 ring-border ring-opacity-5 sm:rounded-lg">
               <table className="min-w-full divide-y divide-border">
-                <thead className="bg-secondary/50">
+                <thead className="bg-[#333333]">
                   <tr>
                     <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-foreground sm:pl-6">Account Name</th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Type</th>
