@@ -7,7 +7,7 @@ import { fetchAllUsersForAdmin, fetchAllProjectsForAdmin, fetchAllTasksForAdmin,
 const StatCard = ({ title, value, icon, to }) => (
   <Link 
     to={to} 
-    className="bg-card border border-border rounded-xl p-6 flex items-center justify-between group hover:border-accent/50 transition-all duration-300"
+    className="bg-card border border-border rounded-xl p-6 flex items-center justify-between group hover:border-accent transition-all duration-300"
   >
     <div>
       <p className="text-sm font-medium text-muted-foreground">{title}</p>
@@ -55,7 +55,7 @@ export default function AdminDashboard() {
   }, []);
 
   if (error) {
-    return <div className="text-center text-red-500 bg-red-900/20 border border-red-500/30 p-4 rounded-lg">{error}</div>;
+    return <div className="text-center text-red-400 bg-red-900/20 border border-red-500/30 p-4 rounded-lg">{error}</div>;
   }
   
   if (loading) {
