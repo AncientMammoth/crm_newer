@@ -101,7 +101,6 @@ app.get("/api/admin/users", adminAuth, async (req, res) => {
     }
 });
 
-// --- (NEW) Endpoint to get a single user's details and their accounts ---
 app.get("/api/admin/users/:id", adminAuth, async (req, res) => {
     try {
         const { id } = req.params;
@@ -136,7 +135,6 @@ app.get("/api/admin/accounts", adminAuth, async (req, res) => {
     }
 });
 
-// --- (NEW) Endpoint to get a single account's details and its projects ---
 app.get("/api/admin/accounts/:id", adminAuth, async (req, res) => {
     try {
         const { id } = req.params;
@@ -187,6 +185,52 @@ app.get("/api/admin/projects", adminAuth, async (req, res) => {
         res.status(200).json(result.rows);
     } catch (error) {
         sendError(res, "Failed to fetch admin projects.", error);
+    }
+});
+
+// --- (NEW) Endpoint to get a single project's details with its tasks and updates ---
+app.get("/api/admin/projects/:id", adminAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const projectQuery = `
+            SELECT p.*, a.account_name, u.user_name as project_owner_name 
+            FROM projects p 
+            LEFT JOIN accounts a ON p.account_id = a.id
+            LEFT JOIN users u ON p.project_owner_id = u.id
+            WHERE p.id = $1
+        `;
+        const tasksQuery = `
+            SELECT t.*, u.user_name as assigned_to_name 
+            FROM tasks t
+            LEFT JOIN users u ON t.assigned_to_id = u.id
+            WHERE t.project_id = $1 
+            ORDER BY t.created_at DESC
+        `;
+        const updatesQuery = `
+            SELECT u.*, owner.user_name as update_owner_name 
+            FROM updates u
+            LEFT JOIN users owner ON u.update_owner_id = owner.id
+            WHERE u.project_id = $1 
+            ORDER BY u.date DESC, u.created_at DESC
+        `;
+
+        const projectResult = await db.query(projectQuery, [id]);
+        if (projectResult.rows.length === 0) {
+            return res.status(404).json({ error: "Project not found." });
+        }
+
+        const [tasksResult, updatesResult] = await Promise.all([
+            db.query(tasksQuery, [id]),
+            db.query(updatesQuery, [id])
+        ]);
+
+        res.status(200).json({
+            project: projectResult.rows[0],
+            tasks: tasksResult.rows,
+            updates: updatesResult.rows,
+        });
+    } catch (error) {
+        sendError(res, "Failed to fetch project details.", error);
     }
 });
 

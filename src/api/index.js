@@ -57,11 +57,11 @@ const formatProject = (proj) => ({
         "Start Date": proj.start_date,
         "End Date": proj.end_date,
         "Account": proj.account_id ? [proj.account_id] : [],
-        "Account Name (from Account)": proj.account_name,
+        "Account Name (from Account)": proj.account_name, // Direct field now
         "Project Value": proj.project_value,
         "Project Description": proj.project_description,
         "Updates": proj.updates || [],
-        "Project Owner Name": proj.project_owner_name,
+        "Project Owner Name": proj.project_owner_name, // New field for owner name
     }
 });
 
@@ -221,7 +221,6 @@ export async function fetchAllUpdatesForAdmin() {
   return updates.map(formatUpdate);
 }
 
-// --- (NEW) Functions for detail pages ---
 export async function fetchAdminUserDetail(userId) {
   const data = await apiRequest(`admin/users/${userId}`);
   const formattedAccounts = data.accounts.map(formatAccount);
@@ -234,6 +233,14 @@ export async function fetchAdminAccountDetail(accountId) {
   return { account: formatAccount(data.account), projects: formattedProjects };
 }
 
+export async function fetchAdminProjectDetail(projectId) {
+  const data = await apiRequest(`admin/projects/${projectId}`);
+  return {
+      project: formatProject(data.project),
+      tasks: data.tasks.map(formatTask),
+      updates: data.updates.map(formatUpdate),
+  };
+}
 
 // =================================================================
 // CLIENT-SIDE LOGIC

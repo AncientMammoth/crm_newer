@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchAllProjectsForAdmin } from '../api';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import { useDebounce } from '../hooks/useDebounce'; // Assuming you have a debounce hook
+import { useDebounce } from '../hooks/useDebounce';
 
 export default function AdminProjectList() {
   const [projects, setProjects] = useState([]);
@@ -9,6 +10,7 @@ export default function AdminProjectList() {
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({ search: '', status: '' });
   const debouncedSearch = useDebounce(filters.search, 300);
+  const navigate = useNavigate();
 
   const loadProjects = useCallback(async () => {
       try {
@@ -77,10 +79,10 @@ export default function AdminProjectList() {
                 value={filters.status}
             >
                 <option value="">All Statuses</option>
-                <option value="Active">Need Analysis</option>
-                <option value="Completed">Negotiation</option>
-                <option value="On Hold">Closed Won</option>
-                <option value="Cancelled">Closed Lost</option>
+                <option value="Active">Active</option>
+                <option value="Completed">Completed</option>
+                <option value="On Hold">On Hold</option>
+                <option value="Cancelled">Cancelled</option>
             </select>
         </div>
       </div>
@@ -114,7 +116,11 @@ export default function AdminProjectList() {
                     </tr>
                   ) : projects.length > 0 ? (
                     projects.map((project) => (
-                        <tr key={project.id}>
+                        <tr 
+                            key={project.id}
+                            className="hover:bg-secondary/50 cursor-pointer"
+                            onClick={() => navigate(`/admin/projects/${project.id}`)}
+                        >
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-foreground sm:pl-6">{project.fields['Project Name']}</td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{project.fields['Account Name (from Account)'] || 'N/A'}</td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{project.fields['Project Owner Name'] || 'N/A'}</td>

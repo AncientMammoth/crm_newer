@@ -27,6 +27,7 @@ import AdminAccountList from './pages/AdminAccountList';
 import AdminUpdateList from './pages/AdminUpdateList';
 import AdminUserDetail from './pages/AdminUserDetail';
 import AdminAccountDetail from './pages/AdminAccountDetail';
+import AdminProjectDetail from './pages/AdminProjectDetail';
 
 function PrivateRoute({ children }) {
   const secretKey = localStorage.getItem("secretKey");
@@ -88,6 +89,7 @@ export default function App() {
         <Route path="accounts" element={<AdminAccountList />} />
         <Route path="accounts/:id" element={<AdminAccountDetail />} />
         <Route path="projects" element={<AdminProjectList />} />
+        <Route path="projects/:id" element={<AdminProjectDetail />} />
         <Route path="tasks" element={<AdminTaskList />} />
         <Route path="updates" element={<AdminUpdateList />} />
       </Route>
