@@ -24,19 +24,39 @@ function classNames(...classes) {
 
 // A custom SVG logo component
 const RianLogo = () => (
-    <svg width="60" height="24" viewBox="0 0 80 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M10.88 23.5V0.5H18.92C21.16 0.5 22.9933 1.13333 24.42 2.4C25.8467 3.66667 26.56 5.26667 26.56 7.2C26.56 8.54667 26.16 9.7 25.36 10.66C24.56 11.62 23.5133 12.2667 22.22 12.6L27.24 23.5H20.6L16.24 13.52H15.12V23.5H10.88ZM15.12 10.16H18.44C19.4267 10.16 20.1867 9.89333 20.72 9.36C21.2533 8.82667 21.52 8.12 21.52 7.24C21.52 6.36 21.2533 5.66667 20.72 5.16C20.1867 4.65333 19.4267 4.4 18.44 4.4H15.12V10.16Z" fill="currentColor"/>
-        <path d="M32.0911 23.5V0.5H36.3311V23.5H32.0911Z" fill="currentColor"/>
-        <path d="M41.0331 23.5V0.5H53.5931V4.4H45.2731V10.04H52.7931V13.94H45.2731V19.6H53.9931V23.5H41.0331Z" fill="currentColor"/>
-        <path d="M58.3313 23.5V0.5H62.5713L70.4913 15.2V0.5H74.3313V23.5H70.0913L62.1713 8.8V23.5H58.3313Z" fill="currentColor"/>
-    </svg>
+    <Link to="/" className="flex items-center space-x-2">
+                <img
+                  className="h-8 w-auto"
+                  src="/rian-logo-footer.svg"
+                  alt="Rian Logo"
+                />
+              </Link>
 );
+
+/**
+ * Generates user initials from a name string.
+ * - "John Doe" -> "JD"
+ * - "Ryan" -> "R"
+ * - "" or null -> "A" (for Admin)
+ */
+const getInitials = (name) => {
+  if (!name || typeof name !== 'string') return 'A';
+  const parts = name.trim().split(' ').filter(Boolean);
+  if (parts.length === 1) {
+    return parts[0].charAt(0).toUpperCase();
+  }
+  if (parts.length > 1) {
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+  }
+  return 'A'; // Fallback for empty strings or other edge cases
+};
 
 
 export default function AdminNavbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const userName = localStorage.getItem('userName') || 'Admin';
+  const userInitials = getInitials(userName);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -116,8 +136,8 @@ export default function AdminNavbar() {
                   <div>
                     <Menu.Button className="flex rounded-full bg-secondary text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-secondary">
                       <span className="sr-only">Open user menu</span>
-                      <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-bold">
-                        {userName.charAt(0).toUpperCase()}
+                      <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xs">
+                        {userInitials}
                       </div>
                     </Menu.Button>
                   </div>
@@ -183,7 +203,7 @@ export default function AdminNavbar() {
               <div className="flex items-center px-4">
                 <div className="flex-shrink-0">
                   <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-white font-bold">
-                     {userName.charAt(0).toUpperCase()}
+                     {userInitials}
                   </div>
                 </div>
                 <div className="ml-3">
