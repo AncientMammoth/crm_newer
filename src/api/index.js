@@ -57,11 +57,11 @@ const formatProject = (proj) => ({
         "Start Date": proj.start_date,
         "End Date": proj.end_date,
         "Account": proj.account_id ? [proj.account_id] : [],
-        "Account Name (from Account)": proj.account_name, // Direct field now
+        "Account Name (from Account)": proj.account_name,
         "Project Value": proj.project_value,
         "Project Description": proj.project_description,
         "Updates": proj.updates || [],
-        "Project Owner Name": proj.project_owner_name, // New field for owner name
+        "Project Owner Name": proj.project_owner_name,
     }
 });
 
@@ -187,7 +187,7 @@ export const updateTask = (taskId, fields) => updateRecord("Tasks", taskId, fiel
 export async function fetchAllUsersForAdmin() {
     const users = await apiRequest("admin/users");
     return users.map(user => ({
-        id: user.airtable_id,
+        id: user.id,
         fields: {
             "User Name": user.user_name,
             "User Type": user.user_type,
@@ -220,6 +220,20 @@ export async function fetchAllUpdatesForAdmin() {
   const updates = await apiRequest("admin/updates");
   return updates.map(formatUpdate);
 }
+
+// --- (NEW) Functions for detail pages ---
+export async function fetchAdminUserDetail(userId) {
+  const data = await apiRequest(`admin/users/${userId}`);
+  const formattedAccounts = data.accounts.map(formatAccount);
+  return { user: data.user, accounts: formattedAccounts };
+}
+
+export async function fetchAdminAccountDetail(accountId) {
+  const data = await apiRequest(`admin/accounts/${accountId}`);
+  const formattedProjects = data.projects.map(formatProject);
+  return { account: formatAccount(data.account), projects: formattedProjects };
+}
+
 
 // =================================================================
 // CLIENT-SIDE LOGIC
