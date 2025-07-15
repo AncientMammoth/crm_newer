@@ -338,19 +338,27 @@ app.get("/api/tasks", async (req, res) => {
     try {
         const { ids } = req.query;
         if (!ids) return res.status(400).json({ error: "No IDs provided." });
+        
         const idArray = ids.split(',').map(Number);
-        const { rows } = await db.query(
-            `SELECT t.*, 
-                    p.project_name, 
-                    p.id as project_id, 
-                    u_assigned.user_name as assigned_to_name,
-                    u_creator.user_name as created_by_name
-             FROM tasks t
-             LEFT JOIN projects p ON t.project_id = p.id
-             LEFT JOIN users u_assigned ON t.assigned_to_id = u_assigned.id
-             LEFT JOIN users u_creator ON t.created_by_id = u_creator.id
-             WHERE t.id = ANY($1::integer[])`, [idArray]
-        );
+        if (idArray.some(isNaN)) {
+            return res.status(400).json({ error: "Invalid ID format provided."});
+        }
+
+        const query = `
+            SELECT 
+                t.*, 
+                p.project_name, 
+                p.id as project_id, 
+                u_assigned.user_name as assigned_to_name,
+                u_creator.user_name as created_by_name
+            FROM tasks t
+            LEFT JOIN projects p ON t.project_id = p.id
+            LEFT JOIN users u_assigned ON t.assigned_to_id = u_assigned.id
+            LEFT JOIN users u_creator ON t.created_by_id = u_creator.id
+            WHERE t.id = ANY($1::integer[])
+        `;
+        
+        const { rows } = await db.query(query, [idArray]);
         res.json(rows);
     } catch (err) {
         sendError(res, 'Failed to fetch tasks', err);

@@ -1,114 +1,127 @@
-import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { fetchTaskById, fetchUpdatesByIds } from "../api";
-import React from "react";
-import { motion } from "framer-motion";
-import { ChevronRightIcon } from "@heroicons/react/20/solid";
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { fetchTaskById, updateTask } from '../api';
+import { ArrowLeftIcon, CalendarIcon, UserIcon, FolderIcon } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
 
 export default function TaskDetail() {
-  const { id } = useParams();
+  const { taskId } = useParams();
+  const [task, setTask] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const { data: task, isLoading, error } = useQuery({
-    queryKey: ["task", id],
-    queryFn: () => fetchTaskById(id),
-    enabled: !!id,
-  });
+  useEffect(() => {
+    const getTask = async () => {
+      try {
+        setLoading(true);
+        const fetchedTask = await fetchTaskById(taskId);
+        if (fetchedTask) {
+          setTask(fetchedTask);
+        } else {
+          setError("No task data found.");
+        }
+      } catch (err) {
+        console.error("Error fetching task details:", err);
+        setError("Could not load task details.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    getTask();
+  }, [taskId]);
 
-  const updateIds = task?.fields?.Updates || [];
-  const { data: updates, isLoading: updatesLoading } = useQuery({
-    queryKey: ["taskUpdates", updateIds],
-    queryFn: () => fetchUpdatesByIds(updateIds),
-    enabled: updateIds.length > 0,
-  });
-
-  if (isLoading) return <div className="text-center py-20 text-lg text-muted-foreground">Loading task details...</div>;
-  if (error) return <div className="text-red-500 text-center py-10">Error loading task: {error.message}</div>;
-  if (!task) return <div className="text-center py-10 text-muted-foreground">No task data found.</div>;
-
-  const name = task.fields["Task Name"] || "Unnamed Task";
-  const description = task.fields["Description"] || <span className="italic">No description provided.</span>;
-  const status = task.fields["Status"] || "N/A";
-  const dueDate = task.fields["Due Date"] ? new Date(task.fields["Due Date"]).toLocaleDateString() : "N/A";
-  const projectName = task.fields["Project Name"]?.[0] || "N/A";
-  const projectId = task.fields["Project"]?.[0];
-  const assignedToName = task.fields["Assigned To Name"]?.[0] || "N/A";
-
-  const statusColors = {
-    "To Do": "bg-gray-500/10 text-gray-400 border-gray-500/20",
-    "In Progress": "bg-blue-500/10 text-blue-400 border-blue-500/20",
-    "Done": "bg-green-500/10 text-green-400 border-green-500/20",
-    "Blocked": "bg-red-500/10 text-red-400 border-red-500/20",
+  const handleStatusChange = async (newStatus) => {
+    if (!task) return;
+    try {
+      const updatedTask = await updateTask(task.id, { Status: newStatus });
+      setTask(updatedTask);
+    } catch (err) {
+      console.error("Failed to update task status:", err);
+      // Optionally show an error to the user
+    }
   };
-  const statusColor = statusColors[status] || "bg-secondary text-muted-foreground border-border";
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500 text-center p-4">{error}</div>;
+  }
+
+  if (!task) {
+    // This case should ideally not be hit if error handling is correct
+    return <div className="text-center p-4">Task could not be loaded.</div>;
+  }
+
+  const { fields } = task;
+  const assignedTo = fields['Assigned To (Name)'] || 'Unassigned';
+  const createdBy = fields['Created By (Name)'] || 'Unknown';
+  const projectName = fields['Project Name'] || 'N/A';
 
   return (
-    <div className="min-h-screen bg-card w-full">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-20">
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+      <div className="mb-6">
+        <Link
+          to="/my-tasks"
+          className="inline-flex items-center text-sm font-medium text-primary hover:underline"
+        >
+          <ArrowLeftIcon className="h-4 w-4 mr-2" />
+          Back to My Tasks
+        </Link>
+      </div>
+
+      <div className="bg-card p-8 rounded-lg shadow-lg border border-border">
+        <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
+          <h1 className="text-4xl font-bold text-foreground mb-4 sm:mb-0">{fields['Task Name']}</h1>
+          <div className="flex-shrink-0">
+            <select
+              value={fields.Status || 'To Do'}
+              onChange={(e) => handleStatusChange(e.target.value)}
+              className="block w-full rounded-md border-input bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm"
             >
-                <nav className="text-sm text-muted-foreground mb-6" aria-label="Breadcrumb">
-                    <ol className="list-none p-0 inline-flex items-center">
-                    <li className="flex items-center">
-                        <Link to="/tasks" className="hover:text-accent transition-colors">Tasks</Link>
-                        <ChevronRightIcon className="h-5 w-5 text-muted-foreground mx-1" />
-                    </li>
-                    <li>
-                        <span className="font-semibold text-foreground">{name}</span>
-                    </li>
-                    </ol>
-                </nav>
-
-                <div className="bg-[#333333] p-6 sm:p-8 rounded-2xl border border-border mb-10">
-                    <div className="flex justify-between items-start mb-4">
-                        <h1 className="text-3xl font-light text-foreground">{name}</h1>
-                        <span className={`text-xs font-medium px-3 py-1 rounded-full border ${statusColor}`}>{status}</span>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm text-muted-foreground font-light">
-                        <p><strong>Due Date:</strong> {dueDate}</p>
-                        <p><strong>Assigned To:</strong> {assignedToName}</p>
-                        <p>
-                            <strong>Project:</strong>{" "}
-                            {projectId ? (
-                                <Link to={`/projects/${projectId}`} className="font-medium text-accent hover:underline">
-                                    {projectName}
-                                </Link>
-                            ) : (
-                                projectName
-                            )}
-                        </p>
-                    </div>
-                    <div className="mt-6 pt-6 border-t border-border">
-                        <h3 className="text-base font-semibold text-foreground mb-2">Description</h3>
-                        <p className="text-foreground font-light">{description}</p>
-                    </div>
-                </div>
-
-                <div>
-                    <h2 className="text-2xl font-light text-foreground mb-4">Associated Updates</h2>
-                    <div className="space-y-4">
-                    {updatesLoading ? (
-                        <p className="text-muted-foreground font-light">Loading updates...</p>
-                    ) : updates && updates.length > 0 ? (
-                        updates.map((update) => (
-                        <div key={update.id} className="bg-secondary p-4 rounded-lg border border-border">
-                            <p className="text-foreground whitespace-pre-wrap mb-3 font-light">{update.fields.Notes}</p>
-                            <div className="flex justify-between items-center text-xs text-muted-foreground pt-3 border-t border-border">
-                            <span><strong>Date:</strong> {new Date(update.fields.Date).toLocaleDateString()}</span>
-                            <span><strong>Owner:</strong> {update.fields["Update Owner Name"]?.[0]}</span>
-                            </div>
-                        </div>
-                        ))
-                    ) : (
-                        <div className="text-center text-muted-foreground bg-secondary p-6 rounded-lg border border-border italic font-light">No updates are associated with this task.</div>
-                    )}
-                    </div>
-                </div>
-            </motion.div>
+              <option>To Do</option>
+              <option>In Progress</option>
+              <option>Done</option>
+            </select>
+          </div>
         </div>
-    </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-muted-foreground mb-6 border-t border-border pt-6">
+          <div className="flex items-center">
+            <FolderIcon className="h-5 w-5 mr-3 text-primary" />
+            <div className="flex flex-col">
+              <span className="font-semibold text-foreground">Project</span>
+              <span>{projectName}</span>
+            </div>
+          </div>
+          <div className="flex items-center">
+            <UserIcon className="h-5 w-5 mr-3 text-primary" />
+            <div className="flex flex-col">
+              <span className="font-semibold text-foreground">Created By</span>
+              <span>{createdBy}</span>
+            </div>
+          </div>
+          <div className="flex items-center">
+            <CalendarIcon className="h-5 w-5 mr-3 text-primary" />
+            <div className="flex flex-col">
+              <span className="font-semibold text-foreground">Due Date</span>
+              <span>{fields['Due Date'] ? new Date(fields['Due Date']).toLocaleDateString() : 'Not set'}</span>
+            </div>
+          </div>
+        </div>
+
+        {fields.Description && (
+          <div className="border-t border-border pt-6">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Description</h2>
+            <p className="text-muted-foreground whitespace-pre-wrap">{fields.Description}</p>
+          </div>
+        )}
+      </div>
+    </motion.div>
   );
 }
