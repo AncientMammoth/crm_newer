@@ -19,7 +19,7 @@ api.interceptors.request.use(config => {
   return Promise.reject(error);
 });
 
-// --- Generic API Request Helper (Corrected) ---
+// --- Generic API Request Helper ---
 async function apiRequest(path, options = {}) {
   try {
     const response = await api({
@@ -45,7 +45,7 @@ const formatAccount = (acc) => ({
         "Account Description": acc.account_description,
         "Account Type": acc.account_type,
         "Projects": acc.projects || [],
-        "Account Owner Name": acc.account_owner_name, // Added for admin view
+        "Account Owner Name": acc.account_owner_name,
     }
 });
 
@@ -57,10 +57,11 @@ const formatProject = (proj) => ({
         "Start Date": proj.start_date,
         "End Date": proj.end_date,
         "Account": proj.account_id ? [proj.account_id] : [],
-        "Account Name (from Account)": proj.account_name ? [proj.account_name] : [],
+        "Account Name (from Account)": proj.account_name, // Direct field now
         "Project Value": proj.project_value,
         "Project Description": proj.project_description,
         "Updates": proj.updates || [],
+        "Project Owner Name": proj.project_owner_name, // New field for owner name
     }
 });
 
@@ -195,8 +196,13 @@ export async function fetchAllUsersForAdmin() {
     }));
 }
 
-export async function fetchAllProjectsForAdmin() {
-  const projects = await apiRequest("admin/projects");
+export async function fetchAllProjectsForAdmin(filters = {}) {
+  const { search, status } = filters;
+  const params = new URLSearchParams();
+  if (search) params.append('search', search);
+  if (status) params.append('status', status);
+  
+  const projects = await apiRequest(`admin/projects?${params.toString()}`);
   return projects.map(formatProject);
 }
 

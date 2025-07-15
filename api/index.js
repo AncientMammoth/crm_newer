@@ -116,12 +116,33 @@ app.get("/api/admin/accounts", adminAuth, async (req, res) => {
 
 app.get("/api/admin/projects", adminAuth, async (req, res) => {
     try {
-        // Corrected Query: Joined with 'accounts' to fetch the account_name
-        const result = await db.query(`
-            SELECT p.*, a.account_name
+        const { search, status } = req.query;
+        let query = `
+            SELECT p.*, a.account_name, u.user_name as project_owner_name
             FROM projects p
             LEFT JOIN accounts a ON p.account_id = a.id
-        `);
+            LEFT JOIN users u ON p.project_owner_id = u.id
+        `;
+        const queryParams = [];
+        const whereClauses = [];
+
+        if (search) {
+            queryParams.push(`%${search}%`);
+            whereClauses.push(`p.project_name ILIKE $${queryParams.length}`);
+        }
+
+        if (status) {
+            queryParams.push(status);
+            whereClauses.push(`p.project_status = $${queryParams.length}`);
+        }
+
+        if (whereClauses.length > 0) {
+            query += " WHERE " + whereClauses.join(" AND ");
+        }
+
+        query += " ORDER BY p.created_at DESC";
+
+        const result = await db.query(query, queryParams);
         res.status(200).json(result.rows);
     } catch (error) {
         sendError(res, "Failed to fetch admin projects.", error);
