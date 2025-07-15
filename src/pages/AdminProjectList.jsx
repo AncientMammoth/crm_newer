@@ -79,10 +79,10 @@ export default function AdminProjectList() {
                 value={filters.status}
             >
                 <option value="">All Statuses</option>
-                <option value="Active">Need Analysis</option>
-                <option value="Completed">Negotiation</option>
-                <option value="On Hold">Closed Won</option>
-                <option value="Cancelled">Closed Lost</option>
+                <option value="Need Analysis">Need Analysis</option>
+                <option value="Negotiation">Negotiation</option>
+                <option value="Closed Won">Closed Won</option>
+                <option value="Closed Lost">Closed Lost</option>
             </select>
         </div>
       </div>
