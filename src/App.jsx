@@ -25,8 +25,8 @@ import AdminProjectList from './pages/AdminProjectList';
 import AdminTaskList from './pages/AdminTaskList';
 import AdminAccountList from './pages/AdminAccountList';
 import AdminUpdateList from './pages/AdminUpdateList';
-import AdminUserDetail from './pages/AdminUserDetail';   // New
-import AdminAccountDetail from './pages/AdminAccountDetail'; // New
+import AdminUserDetail from './pages/AdminUserDetail';
+import AdminAccountDetail from './pages/AdminAccountDetail';
 
 function PrivateRoute({ children }) {
   const secretKey = localStorage.getItem("secretKey");
@@ -84,9 +84,9 @@ export default function App() {
       >
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="users" element={<AdminUserList />} />
-        <Route path="users/:id" element={<AdminUserDetail />} /> {/* New */}
+        <Route path="users/:id" element={<AdminUserDetail />} />
         <Route path="accounts" element={<AdminAccountList />} />
-        <Route path="accounts/:id" element={<AdminAccountDetail />} /> {/* New */}
+        <Route path="accounts/:id" element={<AdminAccountDetail />} />
         <Route path="projects" element={<AdminProjectList />} />
         <Route path="tasks" element={<AdminTaskList />} />
         <Route path="updates" element={<AdminUpdateList />} />
