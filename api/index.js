@@ -211,9 +211,22 @@ app.get("/api/admin/projects/:id", adminAuth, async (req, res) => {
     }
 });
 
+// --- UPDATED ADMIN TASKS ROUTE ---
 app.get("/api/admin/tasks", adminAuth, async (req, res) => {
     try {
-        const result = await db.query('SELECT * FROM tasks');
+        const query = `
+            SELECT 
+                t.*,
+                p.project_name,
+                u_assigned.user_name as assigned_to_name,
+                u_creator.user_name as created_by_name
+            FROM tasks t
+            LEFT JOIN projects p ON t.project_id = p.id
+            LEFT JOIN users u_assigned ON t.assigned_to_id = u_assigned.id
+            LEFT JOIN users u_creator ON t.created_by_id = u_creator.id
+            ORDER BY t.created_at DESC
+        `;
+        const result = await db.query(query);
         res.status(200).json(result.rows);
     } catch (error) {
         sendError(res, "Failed to fetch admin tasks.", error);
@@ -344,7 +357,6 @@ app.get("/api/tasks", async (req, res) => {
     }
 });
 
-// --- NEW ENDPOINT ADDED HERE ---
 app.get("/api/tasks/by-creator/:creatorId", async (req, res) => {
     try {
         const { creatorId } = req.params;
@@ -352,7 +364,6 @@ app.get("/api/tasks/by-creator/:creatorId", async (req, res) => {
             return res.status(400).json({ error: "Creator ID is required." });
         }
         
-        // Find the internal user ID from the provided Airtable ID (creatorId)
         const userResult = await db.query('SELECT id FROM users WHERE airtable_id = $1', [creatorId]);
         if (userResult.rows.length === 0) {
             return res.status(404).json({ error: "Creator not found." });

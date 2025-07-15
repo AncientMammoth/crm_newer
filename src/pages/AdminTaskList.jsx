@@ -1,152 +1,100 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { fetchAllTasksForAdmin, fetchAllUsersForAdmin, fetchAllProjectsForAdmin } from '../api';
-import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { fetchAllTasksForAdmin } from '../api';
+import { PlusIcon } from '@heroicons/react/24/outline';
 
 export default function AdminTaskList() {
   const [tasks, setTasks] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [filters, setFilters] = useState({ status: '', assignedToId: '', projectId: '' });
-  const navigate = useNavigate();
-
-  const loadTasks = useCallback(async () => {
-    try {
-      setLoading(true);
-      // Pass filters to the backend API call
-      const fetchedTasks = await fetchAllTasksForAdmin(filters);
-      setTasks(fetchedTasks);
-      setError(null);
-    } catch (err) {
-      console.error("Error fetching tasks:", err);
-      setError("Could not load task data.");
-    } finally {
-      setLoading(false);
-    }
-  }, [filters]);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const loadFilterData = async () => {
-        try {
-            const [fetchedUsers, fetchedProjects] = await Promise.all([
-                fetchAllUsersForAdmin(),
-                fetchAllProjectsForAdmin()
-            ]);
-            setUsers(fetchedUsers);
-            setProjects(fetchedProjects);
-        } catch (err) {
-            console.error("Failed to load filter data", err);
-        }
+    const getTasks = async () => {
+      try {
+        setLoading(true);
+        const fetchedTasks = await fetchAllTasksForAdmin();
+        setTasks(fetchedTasks);
+      } catch (err) {
+        console.error("Error fetching all tasks:", err);
+        setError('Failed to load tasks.');
+      } finally {
+        setLoading(false);
+      }
     };
-    loadFilterData();
+    getTasks();
   }, []);
 
-  useEffect(() => {
-    loadTasks();
-  }, [loadTasks]);
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
-  };
-
-  const clearFilters = () => {
-    setFilters({ status: '', assignedToId: '', projectId: '' });
-  };
+  if (error) {
+    return <div className="text-red-500 text-center p-4">{error}</div>;
+  }
 
   return (
-    <div className="px-4 sm:px-0">
-        <div className="sm:flex sm:items-center sm:justify-between">
-            <div className="sm:flex-auto">
-                <h1 className="text-2xl font-bold text-foreground">Tasks</h1>
-                <p className="mt-2 text-sm text-muted-foreground">A list of all tasks across all projects in the system.</p>
-            </div>
-            <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-                <button
-                    type="button"
-                    onClick={() => navigate('/admin/create-task')}
-                    className="inline-flex items-center gap-x-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                >
-                    <PlusIcon className="-ml-0.5 h-5 w-5" />
-                    Create Task
-                </button>
-            </div>
-        </div>
-        
-        <div className="mt-6 p-4 bg-[#333333] border border-border rounded-lg">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                    <label htmlFor="status" className="block text-sm font-medium text-muted-foreground mb-1">Status</label>
-                    <select name="status" id="status" onChange={handleFilterChange} value={filters.status} className="block w-full rounded-md border-input bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm">
-                        <option value="">All</option>
-                        <option value="To Do">To Do</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Done">Done</option>
-                    </select>
-                </div>
-                <div>
-                    <label htmlFor="assignedToId" className="block text-sm font-medium text-muted-foreground mb-1">Assigned To</label>
-                    <select name="assignedToId" id="assignedToId" onChange={handleFilterChange} value={filters.assignedToId} className="block w-full rounded-md border-input bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm">
-                        <option value="">All Users</option>
-                        {users.map(user => <option key={user.id} value={user.id}>{user.fields['User Name']}</option>)}
-                    </select>
-                </div>
-                <div>
-                    <label htmlFor="projectId" className="block text-sm font-medium text-muted-foreground mb-1">Project</label>
-                    <select name="projectId" id="projectId" onChange={handleFilterChange} value={filters.projectId} className="block w-full rounded-md border-input bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm">
-                        <option value="">All Projects</option>
-                        {projects.map(project => <option key={project.id} value={project.id}>{project.fields['Project Name']}</option>)}
-                    </select>
-                </div>
-                <div className="flex items-end">
-                    <button onClick={clearFilters} className="text-sm text-muted-foreground hover:text-accent flex items-center gap-1 transition-colors">
-                        <XMarkIcon className="h-4 w-4" />
-                        Clear Filters
-                    </button>
-                </div>
-            </div>
-        </div>
+    <div className="p-6 bg-background text-foreground">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">All Tasks</h1>
+        <Link
+          to="/admin/create-task"
+          className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+        >
+          <PlusIcon className="h-5 w-5 mr-2" />
+          Create Task
+        </Link>
+      </div>
 
-        <div className="mt-8 flow-root">
-            <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                    <div className="overflow-hidden shadow ring-1 ring-border ring-opacity-5 sm:rounded-lg">
-                        <table className="min-w-full divide-y divide-border">
-                            <thead className="bg-[#333333]">
-                                <tr>
-                                    <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-foreground sm:pl-6">Task Name</th>
-                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Project</th>
-                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Assigned To</th>
-                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Status</th>
-                                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Due Date</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border bg-[#333333]">
-                                {loading ? (
-                                    <tr><td colSpan="5" className="py-8 text-center"><div className="flex justify-center items-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div></div></td></tr>
-                                ) : error ? (
-                                    <tr><td colSpan="5" className="py-8 text-center text-red-500">{error}</td></tr>
-                                ) : tasks.length > 0 ? (
-                                    tasks.map((task) => (
-                                        <tr key={task.id}>
-                                            <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-foreground sm:pl-6">{task.fields['Task Name']}</td>
-                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{task.fields['Project Name']}</td>
-                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{task.fields['Assigned To Name']}</td>
-                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{task.fields['Status']}</td>
-                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{task.fields['Due Date']}</td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr><td colSpan="5" className="py-8 text-center text-muted-foreground">No tasks found for the selected filters.</td></tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+      <div className="bg-card border border-border rounded-lg shadow-md">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-border">
+            <thead className="bg-secondary/50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Task Name</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Project</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Assigned To</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Due Date</th>
+                <th scope="col" className="relative px-6 py-3"><span className="sr-only">View</span></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {tasks.map(task => (
+                <tr key={task.id} className="hover:bg-secondary/30 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">{task.fields['Task Name']}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{task.fields['Project Name'] || 'N/A'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{task.fields['Assigned To (Name)'] || 'Unassigned'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                     <span className={`px-2 py-1 text-xs rounded-full inline-block ${
+                        task.fields.Status === 'Done' ? 'bg-green-500/20 text-green-300' :
+                        task.fields.Status === 'In Progress' ? 'bg-yellow-500/20 text-yellow-300' :
+                        'bg-gray-500/20 text-gray-300'
+                      }`}>
+                        {task.fields.Status || 'To-Do'}
+                      </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                    {task.fields['Due Date'] ? new Date(task.fields['Due Date']).toLocaleDateString() : 'Not set'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <Link to={`/admin/tasks/${task.id}`} className="text-primary hover:underline">View</Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+      </div>
+       {tasks.length === 0 && (
+          <div className="text-center py-10">
+            <h2 className="text-2xl font-semibold">No tasks found.</h2>
+            <p className="text-muted-foreground mt-2">There are no tasks in the system yet.</p>
+          </div>
+        )}
     </div>
   );
 }
