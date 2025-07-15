@@ -50,8 +50,8 @@ export default function AdminMyTasks() {
           to="/admin/create-task"
           className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
         >
-          <PlusIcon className="h-5 w-5 mr-2" />
-          Create Task
+          <PlusIcon className="-ml-0.5 h-5 w-5" />
+                              Create Task
         </Link>
       </div>
 

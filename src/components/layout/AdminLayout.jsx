@@ -14,7 +14,7 @@ export default function AdminLayout() {
       <AdminNavbar />
       
       {/* The main content area where child routes will be rendered */}
-      <div className="min-h-[80vh] bg-background">
+      <div className="min-h-[80vh] bg-card">
         <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <Outlet />
         </main>
