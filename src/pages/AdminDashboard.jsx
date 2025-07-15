@@ -3,14 +3,18 @@ import { Link } from 'react-router-dom';
 import { UsersIcon, BriefcaseIcon, ClipboardDocumentListIcon, BuildingOffice2Icon, ChatBubbleBottomCenterTextIcon } from '@heroicons/react/24/outline';
 import { fetchAllUsersForAdmin, fetchAllProjectsForAdmin, fetchAllTasksForAdmin, fetchAllAccountsForAdmin, fetchAllUpdatesForAdmin } from '../api';
 
+// StatCard component with enhanced UI based on the theme
 const StatCard = ({ title, value, icon, to }) => (
-  <Link to={to} className="bg-secondary/50 border border-border rounded-xl p-6 flex items-center justify-between hover:border-primary/80 hover:bg-secondary transition-all duration-300">
+  <Link 
+    to={to} 
+    className="bg-card border border-border rounded-xl p-6 flex items-center justify-between group hover:border-accent/50 transition-all duration-300"
+  >
     <div>
       <p className="text-sm font-medium text-muted-foreground">{title}</p>
-      <p className="text-4xl font-bold text-foreground">{value}</p>
+      <p className="text-4xl font-bold text-foreground group-hover:text-accent transition-colors">{value}</p>
     </div>
-    <div className="p-3 bg-card rounded-full border border-border">
-      {icon}
+    <div className="p-4 bg-secondary rounded-full border border-border group-hover:border-accent/30 transition-colors">
+      {React.cloneElement(icon, { className: "h-8 w-8 text-muted-foreground group-hover:text-accent transition-colors"})}
     </div>
   </Link>
 );
@@ -51,13 +55,13 @@ export default function AdminDashboard() {
   }, []);
 
   if (error) {
-    return <div className="text-center text-red-500">{error}</div>;
+    return <div className="text-center text-red-500 bg-red-900/20 border border-red-500/30 p-4 rounded-lg">{error}</div>;
   }
   
   if (loading) {
       return (
           <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-accent"></div>
           </div>
       );
   }
@@ -75,36 +79,36 @@ export default function AdminDashboard() {
         <StatCard 
           title="Total Users" 
           value={stats.userCount} 
-          icon={<UsersIcon className="h-8 w-8 text-primary" />}
+          icon={<UsersIcon />}
           to="/admin/users"
         />
         <StatCard 
           title="Total Accounts" 
           value={stats.accountCount} 
-          icon={<BuildingOffice2Icon className="h-8 w-8 text-primary" />}
+          icon={<BuildingOffice2Icon />}
           to="/admin/accounts"
         />
         <StatCard 
           title="Total Projects" 
           value={stats.projectCount} 
-          icon={<BriefcaseIcon className="h-8 w-8 text-primary" />}
+          icon={<BriefcaseIcon />}
           to="/admin/projects"
         />
         <StatCard 
           title="Total Tasks" 
           value={stats.taskCount} 
-          icon={<ClipboardDocumentListIcon className="h-8 w-8 text-primary" />}
+          icon={<ClipboardDocumentListIcon />}
           to="/admin/tasks"
         />
         <StatCard 
           title="Total Updates" 
           value={stats.updateCount} 
-          icon={<ChatBubbleBottomCenterTextIcon className="h-8 w-8 text-primary" />}
+          icon={<ChatBubbleBottomCenterTextIcon />}
           to="/admin/updates"
         />
       </div>
 
-      <div className="bg-secondary/50 border border-border rounded-xl p-6">
+      <div className="bg-card border border-border rounded-xl p-6">
         <h2 className="text-xl font-semibold text-foreground">Welcome, Admin!</h2>
         <p className="mt-2 text-muted-foreground">
           From this panel, you can manage all users, oversee every project, and assign tasks. Use the navigation above to get started.

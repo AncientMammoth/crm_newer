@@ -59,17 +59,17 @@ export default function AdminAccountList() {
         </div>
       </div>
       
-      <div className="mt-6 p-4 bg-secondary/50 border border-border rounded-lg">
+      <div className="mt-6 p-4 bg-background border border-border rounded-lg">
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             <div>
                 <label htmlFor="ownerId" className="block text-sm font-medium text-muted-foreground mb-1">Filter by Owner</label>
-                <select name="ownerId" id="ownerId" onChange={handleFilterChange} value={filters.ownerId} className="block w-full rounded-md border-border bg-card py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm">
+                <select name="ownerId" id="ownerId" onChange={handleFilterChange} value={filters.ownerId} className="block w-full rounded-md border-input bg-card py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm">
                     <option value="">All Owners</option>
                     {users.map(user => <option key={user.id} value={user.id}>{user.fields['User Name']}</option>)}
                 </select>
             </div>
             <div className="flex items-end">
-                <button onClick={clearFilters} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                <button onClick={clearFilters} className="text-sm text-muted-foreground hover:text-accent flex items-center gap-1 transition-colors">
                     <XMarkIcon className="h-4 w-4" />
                     Clear Filter
                 </button>
