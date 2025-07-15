@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { Disclosure, Menu, Transition } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
@@ -25,12 +25,13 @@ function classNames(...classes) {
 
 // A custom SVG logo component for "Rian"
 const RianLogo = () => (
-    <svg width="60" height="24" viewBox="0 0 80 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary">
-        <path d="M10.88 23.5V0.5H18.92C21.16 0.5 22.9933 1.13333 24.42 2.4C25.8467 3.66667 26.56 5.26667 26.56 7.2C26.56 8.54667 26.16 9.7 25.36 10.66C24.56 11.62 23.5133 12.2667 22.22 12.6L27.24 23.5H20.6L16.24 13.52H15.12V23.5H10.88ZM15.12 10.16H18.44C19.4267 10.16 20.1867 9.89333 20.72 9.36C21.2533 8.82667 21.52 8.12 21.52 7.24C21.52 6.36 21.2533 5.66667 20.72 5.16C20.1867 4.65333 19.4267 4.4 18.44 4.4H15.12V10.16Z" fill="currentColor"/>
-        <path d="M32.0911 23.5V0.5H36.3311V23.5H32.0911Z" fill="currentColor"/>
-        <path d="M41.0331 23.5V0.5H53.5931V4.4H45.2731V10.04H52.7931V13.94H45.2731V19.6H53.9931V23.5H41.0331Z" fill="currentColor"/>
-        <path d="M58.3313 23.5V0.5H62.5713L70.4913 15.2V0.5H74.3313V23.5H70.0913L62.1713 8.8V23.5H58.3313Z" fill="currentColor"/>
-    </svg>
+    <Link to="/admin/dashboard" className="flex items-center space-x-2">
+                <img
+                  className="h-8 w-auto"
+                  src="/rian-logo-footer.svg"
+                  alt="Rian Logo"
+                />
+              </Link>
 );
 
 /**
@@ -54,8 +55,18 @@ const getInitials = (name) => {
 
 export default function AdminNavbar() {
   const navigate = useNavigate();
-  const userName = localStorage.getItem('userName') || 'Admin';
-  const userInitials = getInitials(userName);
+  // Use state to manage the user's name and initials to prevent race conditions
+  const [userName, setUserName] = useState('');
+  const [userInitials, setUserInitials] = useState('A');
+
+  // useEffect ensures we read from localStorage only after the component has mounted
+  useEffect(() => {
+    const storedUserName = localStorage.getItem('userName');
+    if (storedUserName) {
+      setUserName(storedUserName);
+      setUserInitials(getInitials(storedUserName));
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.clear();
