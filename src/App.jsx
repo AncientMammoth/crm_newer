@@ -31,8 +31,8 @@ import AdminUserDetail from './pages/AdminUserDetail';
 import AdminAccountDetail from './pages/AdminAccountDetail';
 import AdminProjectDetail from './pages/AdminProjectDetail';
 import AdminCreateTask from './pages/AdminCreateTask';
-import AdminMyTasks from './pages/AdminMyTasks'; // --- Import the new component ---
-import AdminTaskDetail from './pages/AdminTaskDetail'; 
+import AdminMyTasks from './pages/AdminMyTasks';
+import AdminTaskDetail from './pages/AdminTaskDetail'; // This import will now work
 
 // Route Guards and Redirects
 function PrivateRoute({ children }) {
@@ -112,7 +112,6 @@ export default function App() {
         <Route path="projects/:id" element={<AdminProjectDetail />} />
         <Route path="tasks" element={<AdminTaskList />} />
         <Route path="tasks/:taskId" element={<AdminTaskDetail />} />
-        {/* --- New Route Added --- */}
         <Route path="my-tasks" element={<AdminMyTasks />} />
         <Route path="create-task" element={<AdminCreateTask />} />
         <Route path="updates" element={<AdminUpdateList />} />
