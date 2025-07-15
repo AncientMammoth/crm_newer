@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchAllProjectsForAdmin } from '../api';
+import { fetchAllProjectsForAdmin, fetchAllUsersForAdmin, fetchAllAccountsForAdmin } from '../api';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useDebounce } from '../hooks/useDebounce';
 
@@ -8,18 +8,25 @@ export default function AdminProjectList() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filters, setFilters] = useState({ search: '', status: '' });
+  
+  // State for filter options and selected values
+  const [users, setUsers] = useState([]);
+  const [accounts, setAccounts] = useState([]);
+  const [filters, setFilters] = useState({ search: '', status: '', ownerId: '', accountId: '' });
   const debouncedSearch = useDebounce(filters.search, 300);
+  
   const navigate = useNavigate();
 
+  // Fetches projects based on the current filter state
   const loadProjects = useCallback(async () => {
       try {
         setLoading(true);
-        const params = {
+        const fetchedProjects = await fetchAllProjectsForAdmin({
             search: debouncedSearch,
-            status: filters.status
-        };
-        const fetchedProjects = await fetchAllProjectsForAdmin(params);
+            status: filters.status,
+            ownerId: filters.ownerId,
+            accountId: filters.accountId,
+        });
         setProjects(fetchedProjects);
         setError(null);
       } catch (err) {
@@ -28,12 +35,31 @@ export default function AdminProjectList() {
       } finally {
         setLoading(false);
       }
-  }, [debouncedSearch, filters.status]);
+  }, [debouncedSearch, filters.status, filters.ownerId, filters.accountId]);
 
+  // Fetches the data needed for the filter dropdowns (users and accounts)
+  useEffect(() => {
+    const loadFilterData = async () => {
+        try {
+            const [fetchedUsers, fetchedAccounts] = await Promise.all([
+                fetchAllUsersForAdmin(),
+                fetchAllAccountsForAdmin()
+            ]);
+            setUsers(fetchedUsers);
+            setAccounts(fetchedAccounts);
+        } catch (err) {
+            console.error("Failed to load filter data", err);
+        }
+    };
+    loadFilterData();
+  }, []);
+
+  // Reloads projects whenever the filters change
   useEffect(() => {
     loadProjects();
   }, [loadProjects]);
 
+  // Updates the filter state when the user interacts with the inputs
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
@@ -51,38 +77,38 @@ export default function AdminProjectList() {
       </div>
 
       {/* Filter and Search Controls */}
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="sm:col-span-2">
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="sm:col-span-2 lg:col-span-1">
             <label htmlFor="search" className="sr-only">Search</label>
             <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <MagnifyingGlassIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                 </div>
-                <input
-                    type="search"
-                    name="search"
-                    id="search"
-                    className="block w-full rounded-md border-border bg-secondary py-2 pl-10 pr-3 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm"
-                    placeholder="Search by project name..."
-                    onChange={handleFilterChange}
-                    value={filters.search}
-                />
+                <input type="search" name="search" id="search" className="block w-full rounded-md border-border bg-secondary py-2 pl-10 pr-3 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" placeholder="Search by name..." onChange={handleFilterChange} value={filters.search} />
             </div>
         </div>
         <div>
             <label htmlFor="status" className="sr-only">Status</label>
-            <select
-                id="status"
-                name="status"
-                className="block w-full rounded-md border-border bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm"
-                onChange={handleFilterChange}
-                value={filters.status}
-            >
+            <select id="status" name="status" className="block w-full rounded-md border-border bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" onChange={handleFilterChange} value={filters.status}>
                 <option value="">All Statuses</option>
                 <option value="Need Analysis">Need Analysis</option>
                 <option value="Negotiation">Negotiation</option>
                 <option value="Closed Won">Closed Won</option>
                 <option value="Closed Lost">Closed Lost</option>
+            </select>
+        </div>
+        <div>
+            <label htmlFor="ownerId" className="sr-only">Owner</label>
+            <select id="ownerId" name="ownerId" className="block w-full rounded-md border-border bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" onChange={handleFilterChange} value={filters.ownerId}>
+                <option value="">All Owners</option>
+                {users.map(user => <option key={user.id} value={user.id}>{user.fields['User Name']}</option>)}
+            </select>
+        </div>
+        <div>
+            <label htmlFor="accountId" className="sr-only">Account</label>
+            <select id="accountId" name="accountId" className="block w-full rounded-md border-border bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" onChange={handleFilterChange} value={filters.accountId}>
+                <option value="">All Accounts</option>
+                {accounts.map(account => <option key={account.id} value={account.id}>{account.fields['Account Name']}</option>)}
             </select>
         </div>
       </div>
@@ -103,35 +129,21 @@ export default function AdminProjectList() {
                 </thead>
                 <tbody className="divide-y divide-border bg-card">
                   {loading ? (
-                    <tr>
-                        <td colSpan="5" className="py-8 text-center">
-                            <div className="flex justify-center items-center">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                            </div>
-                        </td>
-                    </tr>
+                    <tr><td colSpan="5" className="py-8 text-center"><div className="flex justify-center items-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div></td></tr>
                   ) : error ? (
-                    <tr>
-                        <td colSpan="5" className="py-8 text-center text-red-500">{error}</td>
-                    </tr>
+                    <tr><td colSpan="5" className="py-8 text-center text-red-500">{error}</td></tr>
                   ) : projects.length > 0 ? (
                     projects.map((project) => (
-                        <tr 
-                            key={project.id}
-                            className="hover:bg-secondary/50 cursor-pointer"
-                            onClick={() => navigate(`/admin/projects/${project.id}`)}
-                        >
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-foreground sm:pl-6">{project.fields['Project Name']}</td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{project.fields['Account Name (from Account)'] || 'N/A'}</td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{project.fields['Project Owner Name'] || 'N/A'}</td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{project.fields['Project Status']}</td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">₹{(project.fields['Project Value'] || 0).toLocaleString()}</td>
+                        <tr key={project.id} className="hover:bg-secondary/50 cursor-pointer" onClick={() => navigate(`/admin/projects/${project.id}`)}>
+                            <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-foreground sm:pl-6">{project.fields['Project Name']}</td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{project.fields['Account Name (from Account)'] || 'N/A'}</td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{project.fields['Project Owner Name'] || 'N/A'}</td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{project.fields['Project Status']}</td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">₹{(project.fields['Project Value'] || 0).toLocaleString()}</td>
                         </tr>
                     ))
                   ) : (
-                    <tr>
-                        <td colSpan="5" className="py-8 text-center text-muted-foreground">No projects found.</td>
-                    </tr>
+                    <tr><td colSpan="5" className="py-8 text-center text-muted-foreground">No projects found for the selected filters.</td></tr>
                   )}
                 </tbody>
               </table>

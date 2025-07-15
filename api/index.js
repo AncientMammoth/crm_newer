@@ -24,7 +24,7 @@ const adminAuth = async (req, res, next) => {
     const userQuery = 'SELECT user_type FROM users WHERE airtable_id = $1';
     const { rows } = await db.query(userQuery, [secretKey]);
     if (rows.length > 0 && rows[0].user_type === 'admin') {
-      next(); // User is an admin, proceed
+      next();
     } else {
       res.status(403).json({ error: 'Forbidden: Admin access required.' });
     }
@@ -106,17 +106,10 @@ app.get("/api/admin/users/:id", adminAuth, async (req, res) => {
         const { id } = req.params;
         const userQuery = 'SELECT id, user_name, user_type, airtable_id FROM users WHERE id = $1';
         const accountsQuery = 'SELECT * FROM accounts WHERE account_owner_id = $1 ORDER BY created_at DESC';
-
         const userResult = await db.query(userQuery, [id]);
-        if (userResult.rows.length === 0) {
-            return res.status(404).json({ error: "User not found." });
-        }
+        if (userResult.rows.length === 0) return res.status(404).json({ error: "User not found." });
         const accountsResult = await db.query(accountsQuery, [id]);
-
-        res.status(200).json({
-            user: userResult.rows[0],
-            accounts: accountsResult.rows,
-        });
+        res.status(200).json({ user: userResult.rows[0], accounts: accountsResult.rows });
     } catch (error) {
         sendError(res, "Failed to fetch user details.", error);
     }
@@ -124,11 +117,19 @@ app.get("/api/admin/users/:id", adminAuth, async (req, res) => {
 
 app.get("/api/admin/accounts", adminAuth, async (req, res) => {
     try {
-        const result = await db.query(`
+        const { ownerId } = req.query;
+        let query = `
             SELECT a.*, u.user_name as account_owner_name 
             FROM accounts a
             LEFT JOIN users u ON a.account_owner_id = u.id
-        `);
+        `;
+        const queryParams = [];
+        if (ownerId) {
+            queryParams.push(ownerId);
+            query += ` WHERE a.account_owner_id = $1`;
+        }
+        query += " ORDER BY a.created_at DESC";
+        const result = await db.query(query, queryParams);
         res.status(200).json(result.rows);
     } catch (error) {
         sendError(res, "Failed to fetch admin accounts.", error);
@@ -140,17 +141,10 @@ app.get("/api/admin/accounts/:id", adminAuth, async (req, res) => {
         const { id } = req.params;
         const accountQuery = 'SELECT a.*, u.user_name as account_owner_name FROM accounts a LEFT JOIN users u ON a.account_owner_id = u.id WHERE a.id = $1';
         const projectsQuery = 'SELECT p.*, u.user_name as project_owner_name FROM projects p LEFT JOIN users u ON p.project_owner_id = u.id WHERE p.account_id = $1 ORDER BY p.created_at DESC';
-
         const accountResult = await db.query(accountQuery, [id]);
-        if (accountResult.rows.length === 0) {
-            return res.status(404).json({ error: "Account not found." });
-        }
+        if (accountResult.rows.length === 0) return res.status(404).json({ error: "Account not found." });
         const projectsResult = await db.query(projectsQuery, [id]);
-
-        res.status(200).json({
-            account: accountResult.rows[0],
-            projects: projectsResult.rows,
-        });
+        res.status(200).json({ account: accountResult.rows[0], projects: projectsResult.rows });
     } catch (error) {
         sendError(res, "Failed to fetch account details.", error);
     }
@@ -158,7 +152,7 @@ app.get("/api/admin/accounts/:id", adminAuth, async (req, res) => {
 
 app.get("/api/admin/projects", adminAuth, async (req, res) => {
     try {
-        const { search, status } = req.query;
+        const { search, status, ownerId, accountId } = req.query;
         let query = `
             SELECT p.*, a.account_name, u.user_name as project_owner_name
             FROM projects p
@@ -176,6 +170,14 @@ app.get("/api/admin/projects", adminAuth, async (req, res) => {
             queryParams.push(status);
             whereClauses.push(`p.project_status = $${queryParams.length}`);
         }
+        if (ownerId) {
+            queryParams.push(ownerId);
+            whereClauses.push(`p.project_owner_id = $${queryParams.length}`);
+        }
+        if (accountId) {
+            queryParams.push(accountId);
+            whereClauses.push(`p.account_id = $${queryParams.length}`);
+        }
         if (whereClauses.length > 0) {
             query += " WHERE " + whereClauses.join(" AND ");
         }
@@ -188,47 +190,22 @@ app.get("/api/admin/projects", adminAuth, async (req, res) => {
     }
 });
 
-// --- (NEW) Endpoint to get a single project's details with its tasks and updates ---
 app.get("/api/admin/projects/:id", adminAuth, async (req, res) => {
     try {
         const { id } = req.params;
-        const projectQuery = `
-            SELECT p.*, a.account_name, u.user_name as project_owner_name 
-            FROM projects p 
-            LEFT JOIN accounts a ON p.account_id = a.id
-            LEFT JOIN users u ON p.project_owner_id = u.id
-            WHERE p.id = $1
-        `;
-        const tasksQuery = `
-            SELECT t.*, u.user_name as assigned_to_name 
-            FROM tasks t
-            LEFT JOIN users u ON t.assigned_to_id = u.id
-            WHERE t.project_id = $1 
-            ORDER BY t.created_at DESC
-        `;
-        const updatesQuery = `
-            SELECT u.*, owner.user_name as update_owner_name 
-            FROM updates u
-            LEFT JOIN users owner ON u.update_owner_id = owner.id
-            WHERE u.project_id = $1 
-            ORDER BY u.date DESC, u.created_at DESC
-        `;
+        const projectQuery = `SELECT p.*, a.account_name, u.user_name as project_owner_name FROM projects p LEFT JOIN accounts a ON p.account_id = a.id LEFT JOIN users u ON p.project_owner_id = u.id WHERE p.id = $1`;
+        const tasksQuery = `SELECT t.*, u.user_name as assigned_to_name FROM tasks t LEFT JOIN users u ON t.assigned_to_id = u.id WHERE t.project_id = $1 ORDER BY t.created_at DESC`;
+        const updatesQuery = `SELECT u.*, owner.user_name as update_owner_name FROM updates u LEFT JOIN users owner ON u.update_owner_id = owner.id WHERE u.project_id = $1 ORDER BY u.date DESC, u.created_at DESC`;
 
         const projectResult = await db.query(projectQuery, [id]);
-        if (projectResult.rows.length === 0) {
-            return res.status(404).json({ error: "Project not found." });
-        }
+        if (projectResult.rows.length === 0) return res.status(404).json({ error: "Project not found." });
 
         const [tasksResult, updatesResult] = await Promise.all([
             db.query(tasksQuery, [id]),
             db.query(updatesQuery, [id])
         ]);
 
-        res.status(200).json({
-            project: projectResult.rows[0],
-            tasks: tasksResult.rows,
-            updates: updatesResult.rows,
-        });
+        res.status(200).json({ project: projectResult.rows[0], tasks: tasksResult.rows, updates: updatesResult.rows });
     } catch (error) {
         sendError(res, "Failed to fetch project details.", error);
     }
@@ -245,13 +222,38 @@ app.get("/api/admin/tasks", adminAuth, async (req, res) => {
 
 app.get("/api/admin/updates", adminAuth, async (req, res) => {
     try {
-        const result = await db.query(`
+        const { ownerId, projectId, startDate, endDate } = req.query;
+        let query = `
             SELECT u.*, p.project_name, owner.user_name as update_owner_name
             FROM updates u
             LEFT JOIN projects p ON u.project_id = p.id
             LEFT JOIN users owner ON u.update_owner_id = owner.id
-            ORDER BY u.date DESC, u.created_at DESC
-        `);
+        `;
+        const queryParams = [];
+        const whereClauses = [];
+
+        if (ownerId) {
+            queryParams.push(ownerId);
+            whereClauses.push(`u.update_owner_id = $${queryParams.length}`);
+        }
+        if (projectId) {
+            queryParams.push(projectId);
+            whereClauses.push(`u.project_id = $${queryParams.length}`);
+        }
+        if (startDate) {
+            queryParams.push(startDate);
+            whereClauses.push(`u.date >= $${queryParams.length}`);
+        }
+        if (endDate) {
+            queryParams.push(endDate);
+            whereClauses.push(`u.date <= $${queryParams.length}`);
+        }
+        if (whereClauses.length > 0) {
+            query += " WHERE " + whereClauses.join(" AND ");
+        }
+        query += " ORDER BY u.date DESC, u.created_at DESC";
+        
+        const result = await db.query(query, queryParams);
         res.status(200).json(result.rows);
     } catch (error) {
         sendError(res, "Failed to fetch admin updates.", error);

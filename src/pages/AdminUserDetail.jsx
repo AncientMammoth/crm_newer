@@ -54,7 +54,7 @@ export default function AdminUserDetail() {
         </Link>
         <h1 className="text-3xl font-bold text-foreground">{user.user_name}</h1>
         <p className="mt-1 text-muted-foreground">
-          Role: <span className="font-semibold">{user.user_type}</span> | Secret Key: <span className="font-mono">{user.airtable_id}</span>
+          Role: <span className="font-semibold">{user.user_type}</span>
         </p>
       </div>
 

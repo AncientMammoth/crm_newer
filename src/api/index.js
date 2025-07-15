@@ -57,11 +57,11 @@ const formatProject = (proj) => ({
         "Start Date": proj.start_date,
         "End Date": proj.end_date,
         "Account": proj.account_id ? [proj.account_id] : [],
-        "Account Name (from Account)": proj.account_name, // Direct field now
+        "Account Name (from Account)": proj.account_name,
         "Project Value": proj.project_value,
         "Project Description": proj.project_description,
         "Updates": proj.updates || [],
-        "Project Owner Name": proj.project_owner_name, // New field for owner name
+        "Project Owner Name": proj.project_owner_name,
     }
 });
 
@@ -123,7 +123,7 @@ export async function fetchUserBySecretKey(secretKey) {
 
 export async function fetchAllUsers() {
     const users = await apiRequest("users");
-    return users.map(u => ({ id: u.airtable_id, fields: { "User Name": u.user_name } }));
+    return users.map(u => ({ id: u.id, airtable_id: u.airtable_id, fields: { "User Name": u.user_name } }));
 }
 
 export async function createRecord(table, fields) {
@@ -197,10 +197,11 @@ export async function fetchAllUsersForAdmin() {
 }
 
 export async function fetchAllProjectsForAdmin(filters = {}) {
-  const { search, status } = filters;
   const params = new URLSearchParams();
-  if (search) params.append('search', search);
-  if (status) params.append('status', status);
+  if (filters.search) params.append('search', filters.search);
+  if (filters.status) params.append('status', filters.status);
+  if (filters.ownerId) params.append('ownerId', filters.ownerId);
+  if (filters.accountId) params.append('accountId', filters.accountId);
   
   const projects = await apiRequest(`admin/projects?${params.toString()}`);
   return projects.map(formatProject);
@@ -211,13 +212,22 @@ export async function fetchAllTasksForAdmin() {
   return tasks.map(formatTask);
 }
 
-export async function fetchAllAccountsForAdmin() {
-  const accounts = await apiRequest("admin/accounts");
+export async function fetchAllAccountsForAdmin(filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.ownerId) params.append('ownerId', filters.ownerId);
+
+  const accounts = await apiRequest(`admin/accounts?${params.toString()}`);
   return accounts.map(formatAccount);
 }
 
-export async function fetchAllUpdatesForAdmin() {
-  const updates = await apiRequest("admin/updates");
+export async function fetchAllUpdatesForAdmin(filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.ownerId) params.append('ownerId', filters.ownerId);
+  if (filters.projectId) params.append('projectId', filters.projectId);
+  if (filters.startDate) params.append('startDate', filters.startDate);
+  if (filters.endDate) params.append('endDate', filters.endDate);
+
+  const updates = await apiRequest(`admin/updates?${params.toString()}`);
   return updates.map(formatUpdate);
 }
 
