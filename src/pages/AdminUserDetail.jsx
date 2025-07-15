@@ -74,7 +74,7 @@ export default function AdminUserDetail() {
                                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Type</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-border bg-card">
+                            <tbody className="divide-y divide-border bg-[#333333]">
                                 {accounts.length > 0 ? accounts.map((account) => (
                                     <tr 
                                         key={account.id} 

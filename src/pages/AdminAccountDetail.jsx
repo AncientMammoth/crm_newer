@@ -79,7 +79,7 @@ export default function AdminAccountDetail() {
                                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Value</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-border bg-card">
+                            <tbody className="divide-y divide-border bg-[#333333]">
                                 {projects.length > 0 ? projects.map((project) => (
                                     <tr 
                                         key={project.id}

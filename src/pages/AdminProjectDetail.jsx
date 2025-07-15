@@ -78,7 +78,7 @@ export default function AdminProjectDetail() {
                             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Due Date</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-border bg-card">
+                    <tbody className="divide-y divide-border bg-[#333333]">
                         {tasks.length > 0 ? tasks.map((task) => (
                             <tr key={task.id}>
                                 <td className="py-4 pl-4 pr-3 text-sm font-medium text-foreground sm:pl-6">{task.fields['Task Name']}</td>
@@ -113,7 +113,7 @@ export default function AdminProjectDetail() {
                             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Owner</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-border bg-card">
+                    <tbody className="divide-y divide-border bg-[#333333]">
                         {updates.length > 0 ? updates.map((update) => (
                             <tr key={update.id}>
                                 <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-muted-foreground sm:pl-6">{new Date(update.fields['Date']).toLocaleDateString()}</td>

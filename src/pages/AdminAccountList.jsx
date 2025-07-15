@@ -59,7 +59,7 @@ export default function AdminAccountList() {
         </div>
       </div>
       
-      <div className="mt-6 p-4 bg-card border border-border rounded-lg">
+      <div className="mt-6 p-4 bg-[#333333] border border-border rounded-lg">
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             <div>
                 <label htmlFor="ownerId" className="block text-sm font-medium text-muted-foreground mb-1">Filter by Owner</label>
@@ -89,7 +89,7 @@ export default function AdminAccountList() {
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Owner</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border bg-card">
+                <tbody className="divide-y divide-border bg-[#333333]">
                   {loading ? (
                     <tr><td colSpan="3" className="py-8 text-center"><div className="flex justify-center items-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div></div></td></tr>
                   ) : error ? (

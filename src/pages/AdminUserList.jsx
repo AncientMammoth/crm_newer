@@ -44,7 +44,7 @@ export default function AdminUserList() {
         </div>
       </div>
 
-      <div className="mt-6 p-4 bg-card border border-border rounded-lg">
+      <div className="mt-6 p-4 bg-[#333333] border border-border rounded-lg">
         <div className="max-w-sm">
             <label htmlFor="search" className="block text-sm font-medium text-muted-foreground mb-1">Search by Name</label>
             <div className="relative">
@@ -68,7 +68,7 @@ export default function AdminUserList() {
                     
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border bg-card">
+                <tbody className="divide-y divide-border bg-[#333333]">
                   {loading ? (
                     <tr><td colSpan="3" className="py-8 text-center"><div className="flex justify-center items-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div></div></td></tr>
                   ) : error ? (
