@@ -1,7 +1,7 @@
-import { Fragment } from 'react';
+import { Fragment, useState, useEffect, useRef } from 'react';
 import { Disclosure, Menu, Transition } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 
 // Navigation links for the admin panel. "Tasks" is handled separately as a dropdown.
 const navigation = [
@@ -12,12 +12,30 @@ const navigation = [
   { name: 'Updates', href: '/admin/updates' },
 ];
 
+// Task-related links for the dropdown
+const taskNavigation = [
+    { name: 'All Tasks', href: '/admin/tasks' },
+    { name: 'My Created Tasks', href: '/admin/my-tasks' },
+]
+
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ');
 }
 
+// A custom SVG logo component
+const RianLogo = () => (
+    <svg width="60" height="24" viewBox="0 0 80 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10.88 23.5V0.5H18.92C21.16 0.5 22.9933 1.13333 24.42 2.4C25.8467 3.66667 26.56 5.26667 26.56 7.2C26.56 8.54667 26.16 9.7 25.36 10.66C24.56 11.62 23.5133 12.2667 22.22 12.6L27.24 23.5H20.6L16.24 13.52H15.12V23.5H10.88ZM15.12 10.16H18.44C19.4267 10.16 20.1867 9.89333 20.72 9.36C21.2533 8.82667 21.52 8.12 21.52 7.24C21.52 6.36 21.2533 5.66667 20.72 5.16C20.1867 4.65333 19.4267 4.4 18.44 4.4H15.12V10.16Z" fill="currentColor"/>
+        <path d="M32.0911 23.5V0.5H36.3311V23.5H32.0911Z" fill="currentColor"/>
+        <path d="M41.0331 23.5V0.5H53.5931V4.4H45.2731V10.04H52.7931V13.94H45.2731V19.6H53.9931V23.5H41.0331Z" fill="currentColor"/>
+        <path d="M58.3313 23.5V0.5H62.5713L70.4913 15.2V0.5H74.3313V23.5H70.0913L62.1713 8.8V23.5H58.3313Z" fill="currentColor"/>
+    </svg>
+);
+
+
 export default function AdminNavbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const userName = localStorage.getItem('userName') || 'Admin';
 
   const handleLogout = () => {
@@ -26,15 +44,15 @@ export default function AdminNavbar() {
   };
 
   return (
-    <Disclosure as="nav" className="bg-card border-b border-border shadow-sm">
+    <Disclosure as="nav" className="bg-card border-b border-border shadow-sm sticky top-0 z-50">
       {({ open }) => (
         <>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 justify-between">
               <div className="flex">
                 <div className="flex flex-shrink-0 items-center">
-                  <Link to="/admin/dashboard" className="text-2xl font-bold text-primary">
-                    Admin Panel
+                  <Link to="/admin/dashboard" className="text-primary hover:text-primary/80 transition-colors">
+                    <RianLogo />
                   </Link>
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
@@ -45,7 +63,7 @@ export default function AdminNavbar() {
                       to={item.href}
                       className={({ isActive }) =>
                         classNames(
-                          'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium',
+                          'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition-all duration-300',
                           isActive ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground'
                         )
                       }
@@ -54,10 +72,10 @@ export default function AdminNavbar() {
                     </NavLink>
                   ))}
 
-                  {/* --- NEW: Tasks Dropdown Menu --- */}
+                  {/* --- Tasks Dropdown Menu --- */}
                   <Menu as="div" className="relative inline-flex items-center">
                     <div>
-                      <Menu.Button className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-muted-foreground hover:border-gray-300 hover:text-foreground group">
+                      <Menu.Button className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-muted-foreground hover:border-gray-300 hover:text-foreground group transition-all duration-300">
                         <span>Tasks</span>
                         <ChevronDownIcon className="ml-1 h-4 w-4 text-muted-foreground group-hover:text-foreground" aria-hidden="true" />
                       </Menu.Button>
@@ -72,32 +90,21 @@ export default function AdminNavbar() {
                       leaveTo="transform opacity-0 scale-95"
                     >
                       <Menu.Items className="absolute left-0 z-10 mt-2 w-48 origin-top-left rounded-md bg-secondary py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none top-full">
-                        <Menu.Item>
-                          {({ active }) => (
-                            <NavLink
-                              to="/admin/tasks"
-                              className={({ isActive }) => classNames(
-                                active || isActive ? 'bg-card text-foreground' : 'text-muted-foreground',
-                                'block px-4 py-2 text-sm'
-                              )}
-                            >
-                              All Tasks
-                            </NavLink>
-                          )}
-                        </Menu.Item>
-                        <Menu.Item>
-                          {({ active }) => (
-                            <NavLink
-                              to="/admin/my-tasks"
-                              className={({ isActive }) => classNames(
-                                active || isActive ? 'bg-card text-foreground' : 'text-muted-foreground',
-                                'block px-4 py-2 text-sm'
-                              )}
-                            >
-                              My Created Tasks
-                            </NavLink>
-                          )}
-                        </Menu.Item>
+                        {taskNavigation.map((item) => (
+                             <Menu.Item key={item.name}>
+                                {({ active }) => (
+                                    <NavLink
+                                    to={item.href}
+                                    className={({ isActive }) => classNames(
+                                        active || isActive ? 'bg-card text-foreground' : 'text-muted-foreground',
+                                        'block px-4 py-2 text-sm'
+                                    )}
+                                    >
+                                    {item.name}
+                                    </NavLink>
+                                )}
+                            </Menu.Item>
+                        ))}
                       </Menu.Items>
                     </Transition>
                   </Menu>
@@ -158,7 +165,7 @@ export default function AdminNavbar() {
           {/* Mobile view */}
           <Disclosure.Panel className="sm:hidden">
             <div className="space-y-1 pt-2 pb-3">
-              {navigation.map((item) => (
+              {[...navigation, ...taskNavigation].map((item) => (
                 <Disclosure.Button
                   key={item.name}
                   as={NavLink}
@@ -171,27 +178,6 @@ export default function AdminNavbar() {
                   {item.name}
                 </Disclosure.Button>
               ))}
-              {/* Tasks links for mobile */}
-               <Disclosure.Button
-                  as={NavLink}
-                  to="/admin/tasks"
-                  className={({ isActive }) => classNames(
-                    isActive ? 'border-primary bg-primary/10 text-primary' : 'border-transparent text-muted-foreground hover:border-gray-300 hover:bg-secondary hover:text-foreground',
-                    'block border-l-4 py-2 pl-3 pr-4 text-base font-medium'
-                  )}
-                >
-                  All Tasks
-                </Disclosure.Button>
-                <Disclosure.Button
-                  as={NavLink}
-                  to="/admin/my-tasks"
-                  className={({ isActive }) => classNames(
-                    isActive ? 'border-primary bg-primary/10 text-primary' : 'border-transparent text-muted-foreground hover:border-gray-300 hover:bg-secondary hover:text-foreground',
-                    'block border-l-4 py-2 pl-3 pr-4 text-base font-medium'
-                  )}
-                >
-                  My Created Tasks
-                </Disclosure.Button>
             </div>
             <div className="border-t border-border pt-4 pb-3">
               <div className="flex items-center px-4">
