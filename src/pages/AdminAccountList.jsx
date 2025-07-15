@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchAllAccountsForAdmin, fetchAllUsersForAdmin } from '../api';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
 export default function AdminAccountList() {
   const [accounts, setAccounts] = useState([]);
@@ -10,7 +11,6 @@ export default function AdminAccountList() {
   const [filters, setFilters] = useState({ ownerId: '' });
   const navigate = useNavigate();
 
-  // Fetches accounts based on the current filter state
   const loadAccounts = useCallback(async () => {
     try {
       setLoading(true);
@@ -25,7 +25,6 @@ export default function AdminAccountList() {
     }
   }, [filters.ownerId]);
   
-  // Fetches the list of users for the filter dropdown
   useEffect(() => {
     const loadFilterData = async () => {
         try {
@@ -38,15 +37,17 @@ export default function AdminAccountList() {
     loadFilterData();
   }, []);
 
-  // Reloads the accounts list whenever the filter changes
   useEffect(() => {
     loadAccounts();
   }, [loadAccounts]);
 
-  // Updates the filter state when the user selects an owner
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const clearFilters = () => {
+    setFilters({ ownerId: '' });
   };
 
   return (
@@ -56,11 +57,23 @@ export default function AdminAccountList() {
             <h1 className="text-2xl font-bold text-foreground">Accounts</h1>
             <p className="mt-2 text-sm text-muted-foreground">A list of all accounts in the system.</p>
         </div>
-        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-            <select name="ownerId" onChange={handleFilterChange} value={filters.ownerId} className="block w-full rounded-md border-border bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm">
-                <option value="">Filter by Owner</option>
-                {users.map(user => <option key={user.id} value={user.id}>{user.fields['User Name']}</option>)}
-            </select>
+      </div>
+      
+      <div className="mt-6 p-4 bg-secondary/50 border border-border rounded-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div>
+                <label htmlFor="ownerId" className="block text-sm font-medium text-muted-foreground mb-1">Filter by Owner</label>
+                <select name="ownerId" id="ownerId" onChange={handleFilterChange} value={filters.ownerId} className="block w-full rounded-md border-border bg-card py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm">
+                    <option value="">All Owners</option>
+                    {users.map(user => <option key={user.id} value={user.id}>{user.fields['User Name']}</option>)}
+                </select>
+            </div>
+            <div className="flex items-end">
+                <button onClick={clearFilters} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                    <XMarkIcon className="h-4 w-4" />
+                    Clear Filter
+                </button>
+            </div>
         </div>
       </div>
       

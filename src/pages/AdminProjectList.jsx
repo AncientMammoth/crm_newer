@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchAllProjectsForAdmin, fetchAllUsersForAdmin, fetchAllAccountsForAdmin } from '../api';
-import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useDebounce } from '../hooks/useDebounce';
 
 export default function AdminProjectList() {
@@ -9,7 +9,6 @@ export default function AdminProjectList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // State for filter options and selected values
   const [users, setUsers] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [filters, setFilters] = useState({ search: '', status: '', ownerId: '', accountId: '' });
@@ -17,7 +16,6 @@ export default function AdminProjectList() {
   
   const navigate = useNavigate();
 
-  // Fetches projects based on the current filter state
   const loadProjects = useCallback(async () => {
       try {
         setLoading(true);
@@ -37,7 +35,6 @@ export default function AdminProjectList() {
       }
   }, [debouncedSearch, filters.status, filters.ownerId, filters.accountId]);
 
-  // Fetches the data needed for the filter dropdowns (users and accounts)
   useEffect(() => {
     const loadFilterData = async () => {
         try {
@@ -54,15 +51,17 @@ export default function AdminProjectList() {
     loadFilterData();
   }, []);
 
-  // Reloads projects whenever the filters change
   useEffect(() => {
     loadProjects();
   }, [loadProjects]);
 
-  // Updates the filter state when the user interacts with the inputs
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({ search: '', status: '', ownerId: '', accountId: '' });
   };
 
   return (
@@ -76,40 +75,48 @@ export default function AdminProjectList() {
         </div>
       </div>
 
-      {/* Filter and Search Controls */}
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="sm:col-span-2 lg:col-span-1">
-            <label htmlFor="search" className="sr-only">Search</label>
+      {/* Enhanced Filter and Search Controls */}
+      <div className="mt-6 p-4 bg-secondary/50 border border-border rounded-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="sm:col-span-2">
+            <label htmlFor="search" className="block text-sm font-medium text-muted-foreground mb-1">Search by Name</label>
             <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <MagnifyingGlassIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                 </div>
-                <input type="search" name="search" id="search" className="block w-full rounded-md border-border bg-secondary py-2 pl-10 pr-3 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" placeholder="Search by name..." onChange={handleFilterChange} value={filters.search} />
+                <input type="search" name="search" id="search" className="block w-full rounded-md border-border bg-card py-2 pl-10 pr-3 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" placeholder="Project name..." onChange={handleFilterChange} value={filters.search} />
             </div>
-        </div>
-        <div>
-            <label htmlFor="status" className="sr-only">Status</label>
-            <select id="status" name="status" className="block w-full rounded-md border-border bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" onChange={handleFilterChange} value={filters.status}>
-                <option value="">All Statuses</option>
+          </div>
+          <div>
+            <label htmlFor="status" className="block text-sm font-medium text-muted-foreground mb-1">Status</label>
+            <select id="status" name="status" className="block w-full rounded-md border-border bg-card py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" onChange={handleFilterChange} value={filters.status}>
+                <option value="">All</option>
                 <option value="Need Analysis">Need Analysis</option>
                 <option value="Negotiation">Negotiation</option>
                 <option value="Closed Won">Closed Won</option>
                 <option value="Closed Lost">Closed Lost</option>
             </select>
-        </div>
-        <div>
-            <label htmlFor="ownerId" className="sr-only">Owner</label>
-            <select id="ownerId" name="ownerId" className="block w-full rounded-md border-border bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" onChange={handleFilterChange} value={filters.ownerId}>
-                <option value="">All Owners</option>
+          </div>
+          <div>
+            <label htmlFor="ownerId" className="block text-sm font-medium text-muted-foreground mb-1">Owner</label>
+            <select id="ownerId" name="ownerId" className="block w-full rounded-md border-border bg-card py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" onChange={handleFilterChange} value={filters.ownerId}>
+                <option value="">All</option>
                 {users.map(user => <option key={user.id} value={user.id}>{user.fields['User Name']}</option>)}
             </select>
-        </div>
-        <div>
-            <label htmlFor="accountId" className="sr-only">Account</label>
-            <select id="accountId" name="accountId" className="block w-full rounded-md border-border bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" onChange={handleFilterChange} value={filters.accountId}>
-                <option value="">All Accounts</option>
+          </div>
+          <div>
+            <label htmlFor="accountId" className="block text-sm font-medium text-muted-foreground mb-1">Account</label>
+            <select id="accountId" name="accountId" className="block w-full rounded-md border-border bg-card py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" onChange={handleFilterChange} value={filters.accountId}>
+                <option value="">All</option>
                 {accounts.map(account => <option key={account.id} value={account.id}>{account.fields['Account Name']}</option>)}
             </select>
+          </div>
+        </div>
+        <div className="mt-4 flex justify-end">
+            <button onClick={clearFilters} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+                <XMarkIcon className="h-4 w-4" />
+                Clear Filters
+            </button>
         </div>
       </div>
 
