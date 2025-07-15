@@ -56,7 +56,6 @@ export default function AdminUserList() {
                   <tr>
                     <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-foreground sm:pl-6">User Name</th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Role</th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Secret Key</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border bg-card">
@@ -76,7 +75,6 @@ export default function AdminUserList() {
                           {user.fields['User Type']}
                         </span>
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground font-mono">{user.fields['Secret Key']}</td>
                     </tr>
                   ))}
                 </tbody>
