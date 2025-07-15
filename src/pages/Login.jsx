@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import React, { useState, useRef } from "react";
-// The import for fetchUserBySecretKey is correct.
+import React, { useState, useRef, useEffect } from "react"; // Imported useEffect
 import { fetchUserBySecretKey } from "../api"; 
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
@@ -15,19 +14,36 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const inputRef = useRef();
 
+  // --- (NEW) This useEffect hook fixes the redirection issue ---
+  // It runs once when the component loads to check if a user is already logged in.
+  useEffect(() => {
+    const secretKey = localStorage.getItem("secretKey");
+    const isAdmin = localStorage.getItem("isAdmin") === "true";
+
+    if (secretKey) {
+      // If the user is an admin, redirect them to the admin dashboard.
+      if (isAdmin) {
+        navigate("/admin/dashboard");
+      } else {
+        // If they are a regular user, redirect them to the main dashboard.
+        navigate("/");
+      }
+    }
+    // If no secretKey is found, do nothing and show the login page.
+  }, [navigate]);
+
+
   const handleInputChange = async (e) => {
-    const value = e.target.value.replace(/\D/g, ""); // Only digits
+    const value = e.target.value.replace(/\D/g, "");
     setValue("secretKey", value);
 
     if (value.length === 6) {
       setLoginError("");
       setLoading(true);
       try {
-        // Step 1: Make a SINGLE call to the backend to get all user data.
         const user = await fetchUserBySecretKey(value);
 
         if (!user || !user.user_type) {
-          // This error means the key was invalid or the response was incomplete.
           setLoginError("Invalid secret key or user data not found.");
           setValue("secretKey", "");
           if(inputRef.current) {
@@ -37,7 +53,6 @@ export default function Login() {
           return;
         }
 
-        // Step 2: All checks passed. Clear previous session and set new data.
         localStorage.clear();
         localStorage.setItem("userName", user.fields["User Name"] || "User");
         localStorage.setItem("secretKey", value);
@@ -50,14 +65,11 @@ export default function Login() {
         
         setLoading(false);
 
-        // Step 3: Redirect based on the user_type from the SINGLE API response.
         if (user.user_type === 'admin') {
           localStorage.setItem("isAdmin", "true");
-          console.log("Admin user verified. Redirecting to admin dashboard.");
           navigate("/admin/dashboard");
         } else {
           localStorage.setItem("isAdmin", "false");
-          console.log("Regular user verified. Redirecting to homepage.");
           navigate("/");
         }
 
@@ -109,7 +121,7 @@ export default function Login() {
                 })}
                 type="password"
                 placeholder="● ● ● ● ● ●"
-                className="block w-full rounded-lg border border-border bg-secondary shadow-sm focus:border-primary focus:ring-primary text-foreground placeholder-muted-foreground py-4 px-5 text-center tracking-[1.5em] text-2xl font-mono placeholder:tracking-normal"
+                className="block w-full rounded-md border-border bg-secondary shadow-sm focus:border-primary focus:ring-primary text-foreground placeholder:text-muted-foreground py-4 px-5 text-center tracking-[1.5em] text-2xl font-mono placeholder:tracking-normal"
                 disabled={loading}
                 autoFocus
                 maxLength={6}
