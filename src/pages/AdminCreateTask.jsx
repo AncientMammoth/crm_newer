@@ -1,47 +1,89 @@
 import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { useNavigate, Link } from 'react-router-dom';
 import { createTask, fetchAllUsersForAdmin, fetchAllProjectsForAdmin } from '../api';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 export default function AdminCreateTask() {
-  const { register, handleSubmit, formState: { errors } } = useForm();
+  const { register, handleSubmit, formState: { errors }, control, setValue } = useForm();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   
   const [users, setUsers] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [isProjectsLoading, setIsProjectsLoading] = useState(false);
 
+  // Watch for changes in the 'assignedToId' field
+  const assignedToUserAirtableId = useWatch({
+    control,
+    name: "assignedToId",
+  });
+
+  // Fetch all users on initial component load
   useEffect(() => {
-    // Fetch users and projects to populate the dropdowns
-    const loadData = async () => {
+    const loadUsers = async () => {
       try {
-        const [fetchedUsers, fetchedProjects] = await Promise.all([
-          fetchAllUsersForAdmin(),
-          fetchAllProjectsForAdmin()
-        ]);
+        const fetchedUsers = await fetchAllUsersForAdmin();
         setUsers(fetchedUsers);
-        setProjects(fetchedProjects);
       } catch (err) {
-        console.error("Failed to load data for form", err);
-        setError("Could not load necessary data for the form.");
+        console.error("Failed to load users for form", err);
+        setError("Could not load the list of users.");
       }
     };
-    loadData();
+    loadUsers();
   }, []);
+
+  // This effect runs whenever the selected user changes
+  useEffect(() => {
+    const fetchProjectsForUser = async () => {
+      // If no user is selected, clear the projects list
+      if (!assignedToUserAirtableId) {
+        setProjects([]);
+        setValue('projectId', ''); // Reset project field
+        return;
+      }
+      
+      try {
+        setIsProjectsLoading(true);
+        setError(null);
+        setValue('projectId', ''); // Reset project field when user changes
+
+        // Find the selected user's internal database ID
+        const selectedUser = users.find(u => u.fields['Secret Key'] === assignedToUserAirtableId);
+        if (!selectedUser) {
+            setProjects([]);
+            return;
+        };
+
+        const userInternalId = selectedUser.id;
+        
+        // Fetch only the projects owned by that user
+        const fetchedProjects = await fetchAllProjectsForAdmin({ ownerId: userInternalId });
+        setProjects(fetchedProjects);
+      } catch (err) {
+        console.error("Failed to load projects for user", err);
+        setError("Could not load projects for the selected user.");
+        setProjects([]);
+      } finally {
+        setIsProjectsLoading(false);
+      }
+    };
+
+    fetchProjectsForUser();
+  }, [assignedToUserAirtableId, users, setValue]);
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     setError(null);
     
-    const adminAirtableId = localStorage.getItem('userRecordId'); // Admin is the creator
+    const adminAirtableId = localStorage.getItem('userRecordId');
 
     const taskData = {
       "Task Name": data.taskName,
       "Description": data.description,
       "Project": [data.projectId],
-      "Assigned To": [data.assignedToId], // The selected user to assign the task to
+      "Assigned To": [data.assignedToId],
       "Due Date": data.dueDate,
       "Status": data.status,
       "Created By": [adminAirtableId],
@@ -104,8 +146,18 @@ export default function AdminCreateTask() {
             <div className="sm:col-span-3">
                 <label htmlFor="projectId" className="block text-sm font-medium leading-6 text-muted-foreground">Project</label>
                 <div className="mt-2">
-                    <select {...register("projectId", { required: "You must link the task to a project" })} className="block w-full rounded-md border-input bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm">
-                        <option value="">Select a project...</option>
+                    <select 
+                        {...register("projectId", { required: "You must link the task to a project" })} 
+                        className="block w-full rounded-md border-input bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={!assignedToUserAirtableId || isProjectsLoading}
+                    >
+                        <option value="">
+                            {!assignedToUserAirtableId 
+                                ? "Select a user first" 
+                                : isProjectsLoading 
+                                ? "Loading projects..." 
+                                : "Select a project..."}
+                        </option>
                         {projects.map(project => <option key={project.id} value={project.id}>{project.fields['Project Name']}</option>)}
                     </select>
                     {errors.projectId && <p className="mt-2 text-sm text-red-500">{errors.projectId.message}</p>}
