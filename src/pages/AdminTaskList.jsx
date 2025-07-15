@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchAllTasksForAdmin, fetchAllUsersForAdmin, fetchAllProjectsForAdmin } from '../api';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 export default function AdminTaskList() {
   const [tasks, setTasks] = useState([]);
@@ -9,10 +10,12 @@ export default function AdminTaskList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({ status: '', assignedToId: '', projectId: '' });
+  const navigate = useNavigate();
 
   const loadTasks = useCallback(async () => {
     try {
       setLoading(true);
+      // Pass filters to the backend API call
       const fetchedTasks = await fetchAllTasksForAdmin(filters);
       setTasks(fetchedTasks);
       setError(null);
@@ -55,14 +58,24 @@ export default function AdminTaskList() {
 
   return (
     <div className="px-4 sm:px-0">
-        <div className="sm:flex sm:items-center">
+        <div className="sm:flex sm:items-center sm:justify-between">
             <div className="sm:flex-auto">
                 <h1 className="text-2xl font-bold text-foreground">Tasks</h1>
                 <p className="mt-2 text-sm text-muted-foreground">A list of all tasks across all projects in the system.</p>
             </div>
+            <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+                <button
+                    type="button"
+                    onClick={() => navigate('/admin/create-task')}
+                    className="inline-flex items-center gap-x-2 rounded-md bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
+                    <PlusIcon className="-ml-0.5 h-5 w-5" />
+                    Create Task
+                </button>
+            </div>
         </div>
         
-        <div className="mt-6 p-4 bg-[#333333] border border-border rounded-lg">
+        <div className="mt-6 p-4 bg-card border border-border rounded-lg">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                     <label htmlFor="status" className="block text-sm font-medium text-muted-foreground mb-1">Status</label>
@@ -101,7 +114,7 @@ export default function AdminTaskList() {
                 <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
                     <div className="overflow-hidden shadow ring-1 ring-border ring-opacity-5 sm:rounded-lg">
                         <table className="min-w-full divide-y divide-border">
-                            <thead className="bg-[#333333]">
+                            <thead className="bg-secondary/50">
                                 <tr>
                                     <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-foreground sm:pl-6">Task Name</th>
                                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Project</th>
@@ -110,7 +123,7 @@ export default function AdminTaskList() {
                                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Due Date</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-border bg-[#333333]">
+                            <tbody className="divide-y divide-border bg-card">
                                 {loading ? (
                                     <tr><td colSpan="5" className="py-8 text-center"><div className="flex justify-center items-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div></div></td></tr>
                                 ) : error ? (
