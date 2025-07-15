@@ -76,20 +76,20 @@ export default function AdminProjectList() {
       </div>
 
       {/* Enhanced Filter and Search Controls */}
-      <div className="mt-6 p-4 bg-background border border-border rounded-lg">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="sm:col-span-2 lg:col-span-1">
+      <div className="mt-6 p-4 bg-card border border-border rounded-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="sm:col-span-2">
             <label htmlFor="search" className="block text-sm font-medium text-muted-foreground mb-1">Search by Name</label>
             <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <MagnifyingGlassIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                 </div>
-                <input type="search" name="search" id="search" className="block w-full rounded-md border-input bg-card py-2 pl-10 pr-3 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" placeholder="Project name..." onChange={handleFilterChange} value={filters.search} />
+                <input type="search" name="search" id="search" className="block w-full rounded-md border-input bg-secondary py-2 pl-10 pr-3 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" placeholder="Project name..." onChange={handleFilterChange} value={filters.search} />
             </div>
           </div>
           <div>
             <label htmlFor="status" className="block text-sm font-medium text-muted-foreground mb-1">Status</label>
-            <select id="status" name="status" className="block w-full rounded-md border-input bg-card py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" onChange={handleFilterChange} value={filters.status}>
+            <select id="status" name="status" className="block w-full rounded-md border-input bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" onChange={handleFilterChange} value={filters.status}>
                 <option value="">All</option>
                 <option value="Need Analysis">Need Analysis</option>
                 <option value="Negotiation">Negotiation</option>
@@ -99,14 +99,14 @@ export default function AdminProjectList() {
           </div>
           <div>
             <label htmlFor="ownerId" className="block text-sm font-medium text-muted-foreground mb-1">Owner</label>
-            <select id="ownerId" name="ownerId" className="block w-full rounded-md border-input bg-card py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" onChange={handleFilterChange} value={filters.ownerId}>
+            <select id="ownerId" name="ownerId" className="block w-full rounded-md border-input bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" onChange={handleFilterChange} value={filters.ownerId}>
                 <option value="">All</option>
                 {users.map(user => <option key={user.id} value={user.id}>{user.fields['User Name']}</option>)}
             </select>
           </div>
           <div>
             <label htmlFor="accountId" className="block text-sm font-medium text-muted-foreground mb-1">Account</label>
-            <select id="accountId" name="accountId" className="block w-full rounded-md border-input bg-card py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" onChange={handleFilterChange} value={filters.accountId}>
+            <select id="accountId" name="accountId" className="block w-full rounded-md border-input bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" onChange={handleFilterChange} value={filters.accountId}>
                 <option value="">All</option>
                 {accounts.map(account => <option key={account.id} value={account.id}>{account.fields['Account Name']}</option>)}
             </select>
@@ -136,7 +136,7 @@ export default function AdminProjectList() {
                 </thead>
                 <tbody className="divide-y divide-border bg-card">
                   {loading ? (
-                    <tr><td colSpan="5" className="py-8 text-center"><div className="flex justify-center items-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div></td></tr>
+                    <tr><td colSpan="5" className="py-8 text-center"><div className="flex justify-center items-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div></div></td></tr>
                   ) : error ? (
                     <tr><td colSpan="5" className="py-8 text-center text-red-500">{error}</td></tr>
                   ) : projects.length > 0 ? (

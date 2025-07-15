@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchAllUsersForAdmin } from '../api';
-import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useDebounce } from '../hooks/useDebounce';
 
 export default function AdminUserList() {
@@ -12,7 +12,6 @@ export default function AdminUserList() {
   const debouncedSearch = useDebounce(searchTerm, 300);
   const navigate = useNavigate();
 
-  // The list is filtered on the client-side for simplicity
   const filteredUsers = users.filter(user => 
     user.fields['User Name'].toLowerCase().includes(debouncedSearch.toLowerCase())
   );
@@ -45,14 +44,14 @@ export default function AdminUserList() {
         </div>
       </div>
 
-      <div className="mt-6 p-4 bg-background border border-border rounded-lg">
+      <div className="mt-6 p-4 bg-card border border-border rounded-lg">
         <div className="max-w-sm">
             <label htmlFor="search" className="block text-sm font-medium text-muted-foreground mb-1">Search by Name</label>
             <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <MagnifyingGlassIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                 </div>
-                <input type="search" name="search" id="search" className="block w-full rounded-md border-input bg-card py-2 pl-10 pr-3 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" placeholder="User name..." onChange={(e) => setSearchTerm(e.target.value)} value={searchTerm} />
+                <input type="search" name="search" id="search" className="block w-full rounded-md border-input bg-secondary py-2 pl-10 pr-3 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm" placeholder="User name..." onChange={(e) => setSearchTerm(e.target.value)} value={searchTerm} />
             </div>
         </div>
       </div>
@@ -66,11 +65,12 @@ export default function AdminUserList() {
                   <tr>
                     <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-foreground sm:pl-6">User Name</th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Role</th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-foreground">Secret Key</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border bg-card">
                   {loading ? (
-                    <tr><td colSpan="3" className="py-8 text-center"><div className="flex justify-center items-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div></td></tr>
+                    <tr><td colSpan="3" className="py-8 text-center"><div className="flex justify-center items-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div></div></td></tr>
                   ) : error ? (
                     <tr><td colSpan="3" className="py-8 text-center text-red-500">{error}</td></tr>
                   ) : filteredUsers.length > 0 ? (
@@ -82,6 +82,7 @@ export default function AdminUserList() {
                                     {user.fields['User Type']}
                                 </span>
                             </td>
+                            <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground font-mono">{user.fields['Secret Key']}</td>
                         </tr>
                     ))
                   ) : (

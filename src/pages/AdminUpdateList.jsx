@@ -62,26 +62,26 @@ export default function AdminUpdateList() {
             </div>
         </div>
         
-        <div className="mt-6 p-4 bg-background border border-border rounded-lg">
+        <div className="mt-6 p-4 bg-card border border-border rounded-lg">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-6">
                 <div>
                     <label htmlFor="startDate" className="block text-sm font-medium text-muted-foreground mb-1">Start Date</label>
-                    <input type="date" name="startDate" id="startDate" onChange={handleFilterChange} value={filters.startDate} className="block w-full rounded-md border-input bg-card py-2 px-3 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm"/>
+                    <input type="date" name="startDate" id="startDate" onChange={handleFilterChange} value={filters.startDate} className="block w-full rounded-md border-input bg-secondary py-2 px-3 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm"/>
                 </div>
                 <div>
                     <label htmlFor="endDate" className="block text-sm font-medium text-muted-foreground mb-1">End Date</label>
-                    <input type="date" name="endDate" id="endDate" onChange={handleFilterChange} value={filters.endDate} className="block w-full rounded-md border-input bg-card py-2 px-3 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm"/>
+                    <input type="date" name="endDate" id="endDate" onChange={handleFilterChange} value={filters.endDate} className="block w-full rounded-md border-input bg-secondary py-2 px-3 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm"/>
                 </div>
                 <div>
                     <label htmlFor="ownerId" className="block text-sm font-medium text-muted-foreground mb-1">Owner</label>
-                    <select name="ownerId" id="ownerId" onChange={handleFilterChange} value={filters.ownerId} className="block w-full rounded-md border-input bg-card py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm">
+                    <select name="ownerId" id="ownerId" onChange={handleFilterChange} value={filters.ownerId} className="block w-full rounded-md border-input bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm">
                         <option value="">All</option>
                         {users.map(user => <option key={user.id} value={user.id}>{user.fields['User Name']}</option>)}
                     </select>
                 </div>
                 <div>
                     <label htmlFor="projectId" className="block text-sm font-medium text-muted-foreground mb-1">Project</label>
-                    <select name="projectId" id="projectId" onChange={handleFilterChange} value={filters.projectId} className="block w-full rounded-md border-input bg-card py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm">
+                    <select name="projectId" id="projectId" onChange={handleFilterChange} value={filters.projectId} className="block w-full rounded-md border-input bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm">
                         <option value="">All</option>
                         {projects.map(project => <option key={project.id} value={project.id}>{project.fields['Project Name']}</option>)}
                     </select>
@@ -110,7 +110,7 @@ export default function AdminUpdateList() {
                             </thead>
                             <tbody className="divide-y divide-border bg-card">
                                 {loading ? (
-                                    <tr><td colSpan="4" className="py-8 text-center"><div className="flex justify-center items-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div></td></tr>
+                                    <tr><td colSpan="4" className="py-8 text-center"><div className="flex justify-center items-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div></div></td></tr>
                                 ) : error ? (
                                     <tr><td colSpan="4" className="py-8 text-center text-red-500">{error}</td></tr>
                                 ) : updates.length > 0 ? (

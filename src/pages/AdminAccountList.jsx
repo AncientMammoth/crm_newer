@@ -59,11 +59,11 @@ export default function AdminAccountList() {
         </div>
       </div>
       
-      <div className="mt-6 p-4 bg-background border border-border rounded-lg">
+      <div className="mt-6 p-4 bg-card border border-border rounded-lg">
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             <div>
                 <label htmlFor="ownerId" className="block text-sm font-medium text-muted-foreground mb-1">Filter by Owner</label>
-                <select name="ownerId" id="ownerId" onChange={handleFilterChange} value={filters.ownerId} className="block w-full rounded-md border-input bg-card py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm">
+                <select name="ownerId" id="ownerId" onChange={handleFilterChange} value={filters.ownerId} className="block w-full rounded-md border-input bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm">
                     <option value="">All Owners</option>
                     {users.map(user => <option key={user.id} value={user.id}>{user.fields['User Name']}</option>)}
                 </select>
@@ -91,7 +91,7 @@ export default function AdminAccountList() {
                 </thead>
                 <tbody className="divide-y divide-border bg-card">
                   {loading ? (
-                    <tr><td colSpan="3" className="py-8 text-center"><div className="flex justify-center items-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div></td></tr>
+                    <tr><td colSpan="3" className="py-8 text-center"><div className="flex justify-center items-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div></div></td></tr>
                   ) : error ? (
                     <tr><td colSpan="3" className="py-8 text-center text-red-500">{error}</td></tr>
                   ) : accounts.length > 0 ? (
