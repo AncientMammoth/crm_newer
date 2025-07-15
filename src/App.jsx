@@ -23,10 +23,11 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminUserList from './pages/AdminUserList';
 import AdminProjectList from './pages/AdminProjectList';
 import AdminTaskList from './pages/AdminTaskList';
-import AdminAccountList from './pages/AdminAccountList'; // New
-import AdminUpdateList from './pages/AdminUpdateList';   // New
+import AdminAccountList from './pages/AdminAccountList';
+import AdminUpdateList from './pages/AdminUpdateList';
+import AdminUserDetail from './pages/AdminUserDetail';   // New
+import AdminAccountDetail from './pages/AdminAccountDetail'; // New
 
-// A private route for any logged-in user
 function PrivateRoute({ children }) {
   const secretKey = localStorage.getItem("secretKey");
   if (!secretKey) {
@@ -35,11 +36,9 @@ function PrivateRoute({ children }) {
   return children;
 }
 
-// A specific private route that checks for the 'isAdmin' flag
 function AdminPrivateRoute({ children }) {
     const isAdmin = localStorage.getItem("isAdmin") === "true";
     const secretKey = localStorage.getItem("secretKey");
-
     if (!secretKey || !isAdmin) {
         return <Navigate to="/login" />;
     }
@@ -47,14 +46,10 @@ function AdminPrivateRoute({ children }) {
 }
 
 export default function App() {
-  React.useEffect(() => {
-  }, []);
-
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
 
-      {/* --- Regular User Routes --- */}
       <Route
         path="/"
         element={
@@ -79,7 +74,6 @@ export default function App() {
         <Route path="tasks/:taskId" element={<TaskDetail />} />
       </Route>
 
-      {/* --- Admin Routes --- */}
       <Route
         path="/admin"
         element={
@@ -90,12 +84,13 @@ export default function App() {
       >
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="users" element={<AdminUserList />} />
+        <Route path="users/:id" element={<AdminUserDetail />} /> {/* New */}
         <Route path="accounts" element={<AdminAccountList />} />
+        <Route path="accounts/:id" element={<AdminAccountDetail />} /> {/* New */}
         <Route path="projects" element={<AdminProjectList />} />
         <Route path="tasks" element={<AdminTaskList />} />
         <Route path="updates" element={<AdminUpdateList />} />
       </Route>
-
     </Routes>
   );
 }

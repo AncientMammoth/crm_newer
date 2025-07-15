@@ -1,11 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
-import { fetchAllAccountsForAdmin } from '../api'; // This function will be created next
+import { useNavigate } from 'react-router-dom';
+import { fetchAllAccountsForAdmin } from '../api';
 
 export default function AdminAccountList() {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadAccounts = async () => {
@@ -60,7 +61,11 @@ export default function AdminAccountList() {
                 </thead>
                 <tbody className="divide-y divide-border bg-card">
                   {accounts.map((account) => (
-                    <tr key={account.id}>
+                    <tr 
+                        key={account.id}
+                        className="hover:bg-secondary/50 cursor-pointer"
+                        onClick={() => navigate(`/admin/accounts/${account.id}`)}
+                    >
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-foreground sm:pl-6">{account.fields['Account Name']}</td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{account.fields['Account Type']}</td>
                        <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">{account.fields['Account Owner Name']}</td>

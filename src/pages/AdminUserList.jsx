@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchAllUsersForAdmin } from '../api';
-import { UserCircleIcon } from '@heroicons/react/24/outline';
 
 export default function AdminUserList() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -60,7 +61,11 @@ export default function AdminUserList() {
                 </thead>
                 <tbody className="divide-y divide-border bg-card">
                   {users.map((user) => (
-                    <tr key={user.id}>
+                    <tr 
+                        key={user.id} 
+                        className="hover:bg-secondary/50 cursor-pointer"
+                        onClick={() => navigate(`/admin/users/${user.id}`)}
+                    >
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-foreground sm:pl-6">{user.fields['User Name']}</td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-muted-foreground">
                         <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${

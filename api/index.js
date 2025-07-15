@@ -101,6 +101,28 @@ app.get("/api/admin/users", adminAuth, async (req, res) => {
     }
 });
 
+// --- (NEW) Endpoint to get a single user's details and their accounts ---
+app.get("/api/admin/users/:id", adminAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userQuery = 'SELECT id, user_name, user_type, airtable_id FROM users WHERE id = $1';
+        const accountsQuery = 'SELECT * FROM accounts WHERE account_owner_id = $1 ORDER BY created_at DESC';
+
+        const userResult = await db.query(userQuery, [id]);
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: "User not found." });
+        }
+        const accountsResult = await db.query(accountsQuery, [id]);
+
+        res.status(200).json({
+            user: userResult.rows[0],
+            accounts: accountsResult.rows,
+        });
+    } catch (error) {
+        sendError(res, "Failed to fetch user details.", error);
+    }
+});
+
 app.get("/api/admin/accounts", adminAuth, async (req, res) => {
     try {
         const result = await db.query(`
@@ -111,6 +133,28 @@ app.get("/api/admin/accounts", adminAuth, async (req, res) => {
         res.status(200).json(result.rows);
     } catch (error) {
         sendError(res, "Failed to fetch admin accounts.", error);
+    }
+});
+
+// --- (NEW) Endpoint to get a single account's details and its projects ---
+app.get("/api/admin/accounts/:id", adminAuth, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const accountQuery = 'SELECT a.*, u.user_name as account_owner_name FROM accounts a LEFT JOIN users u ON a.account_owner_id = u.id WHERE a.id = $1';
+        const projectsQuery = 'SELECT p.*, u.user_name as project_owner_name FROM projects p LEFT JOIN users u ON p.project_owner_id = u.id WHERE p.account_id = $1 ORDER BY p.created_at DESC';
+
+        const accountResult = await db.query(accountQuery, [id]);
+        if (accountResult.rows.length === 0) {
+            return res.status(404).json({ error: "Account not found." });
+        }
+        const projectsResult = await db.query(projectsQuery, [id]);
+
+        res.status(200).json({
+            account: accountResult.rows[0],
+            projects: projectsResult.rows,
+        });
+    } catch (error) {
+        sendError(res, "Failed to fetch account details.", error);
     }
 });
 
@@ -130,16 +174,13 @@ app.get("/api/admin/projects", adminAuth, async (req, res) => {
             queryParams.push(`%${search}%`);
             whereClauses.push(`p.project_name ILIKE $${queryParams.length}`);
         }
-
         if (status) {
             queryParams.push(status);
             whereClauses.push(`p.project_status = $${queryParams.length}`);
         }
-
         if (whereClauses.length > 0) {
             query += " WHERE " + whereClauses.join(" AND ");
         }
-
         query += " ORDER BY p.created_at DESC";
 
         const result = await db.query(query, queryParams);
