@@ -64,7 +64,7 @@ export default function AdminCreateTask() {
           Back to All Tasks
       </Link>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 p-8 bg-card border border-border rounded-lg">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 p-8 bg-[#333333] border border-border rounded-lg">
         <div className="space-y-4">
             <h2 className="text-2xl font-bold leading-7 text-foreground">Create and Assign a New Task</h2>
             <p className="text-sm leading-6 text-muted-foreground">
