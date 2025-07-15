@@ -54,7 +54,6 @@ export default function TaskDetail() {
   }
 
   if (!task) {
-    // This case should ideally not be hit if error handling is correct
     return <div className="text-center p-4">Task could not be loaded.</div>;
   }
 
@@ -64,7 +63,7 @@ export default function TaskDetail() {
   const projectName = fields['Project Name'] || 'N/A';
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: "easeInOut" }}>
       <div className="mb-6">
         <Link
           to="/my-tasks"
@@ -75,14 +74,17 @@ export default function TaskDetail() {
         </Link>
       </div>
 
-      <div className="bg-card p-8 rounded-lg shadow-lg border border-border">
-        <div className="flex flex-col sm:flex-row justify-between items-start mb-4">
-          <h1 className="text-4xl font-bold text-foreground mb-4 sm:mb-0">{fields['Task Name']}</h1>
-          <div className="flex-shrink-0">
+      <div className="bg-card p-6 sm:p-8 rounded-2xl shadow-lg border border-border">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 border-b border-border">
+          <h1 className="text-3xl lg:text-4xl font-bold text-foreground tracking-tight">
+            {fields['Task Name']}
+          </h1>
+          <div className="flex-shrink-0 w-full sm:w-auto">
             <select
               value={fields.Status || 'To Do'}
               onChange={(e) => handleStatusChange(e.target.value)}
-              className="block w-full rounded-md border-input bg-secondary py-2 pl-3 pr-10 text-foreground focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm"
+              className="block w-full rounded-md border-input bg-secondary py-2 pl-3 pr-10 text-foreground font-semibold focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm"
             >
               <option>To Do</option>
               <option>In Progress</option>
@@ -91,34 +93,38 @@ export default function TaskDetail() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-muted-foreground mb-6 border-t border-border pt-6">
-          <div className="flex items-center">
-            <FolderIcon className="h-5 w-5 mr-3 text-primary" />
-            <div className="flex flex-col">
-              <span className="font-semibold text-foreground">Project</span>
-              <span>{projectName}</span>
+        {/* Details Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-8 py-6">
+          <div className="flex items-start gap-4">
+            <FolderIcon className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
+            <div>
+              <p className="text-sm text-muted-foreground">Project</p>
+              <p className="font-semibold text-foreground mt-1">{projectName}</p>
             </div>
           </div>
-          <div className="flex items-center">
-            <UserIcon className="h-5 w-5 mr-3 text-primary" />
-            <div className="flex flex-col">
-              <span className="font-semibold text-foreground">Created By</span>
-              <span>{createdBy}</span>
+          <div className="flex items-start gap-4">
+            <UserIcon className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
+            <div>
+              <p className="text-sm text-muted-foreground">Created By</p>
+              <p className="font-semibold text-foreground mt-1">{createdBy}</p>
             </div>
           </div>
-          <div className="flex items-center">
-            <CalendarIcon className="h-5 w-5 mr-3 text-primary" />
-            <div className="flex flex-col">
-              <span className="font-semibold text-foreground">Due Date</span>
-              <span>{fields['Due Date'] ? new Date(fields['Due Date']).toLocaleDateString() : 'Not set'}</span>
+          <div className="flex items-start gap-4">
+            <CalendarIcon className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
+            <div>
+              <p className="text-sm text-muted-foreground">Due Date</p>
+              <p className="font-semibold text-foreground mt-1">{fields['Due Date'] ? new Date(fields['Due Date']).toLocaleDateString() : 'Not set'}</p>
             </div>
           </div>
         </div>
 
+        {/* Description Section */}
         {fields.Description && (
           <div className="border-t border-border pt-6">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Description</h2>
-            <p className="text-muted-foreground whitespace-pre-wrap">{fields.Description}</p>
+            <h2 className="text-lg font-semibold text-foreground mb-3">Description</h2>
+            <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
+              {fields.Description}
+            </p>
           </div>
         )}
       </div>
