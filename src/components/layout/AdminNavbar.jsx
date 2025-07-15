@@ -1,6 +1,6 @@
-import { Fragment, useState, useEffect } from 'react';
+import { Fragment } from 'react';
 import { Disclosure, Menu, Transition } from '@headlessui/react';
-import { Bars3Icon, XMarkIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, ChevronDownIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
@@ -25,7 +25,7 @@ function classNames(...classes) {
 
 // A custom SVG logo component for "Rian"
 const RianLogo = () => (
-    <Link to="/admin/dashboard" className="flex items-center space-x-2">
+    <Link to="/" className="flex items-center space-x-2">
                 <img
                   className="h-8 w-auto"
                   src="/rian-logo-footer.svg"
@@ -34,39 +34,8 @@ const RianLogo = () => (
               </Link>
 );
 
-/**
- * Generates user initials from a name string.
- * - "John Doe" -> "JD"
- * - "Ryan" -> "R"
- * - "" or null -> "A" (for Admin)
- */
-const getInitials = (name) => {
-  if (!name || typeof name !== 'string') return 'A';
-  const parts = name.trim().split(' ').filter(Boolean);
-  if (parts.length === 1) {
-    return parts[0].charAt(0).toUpperCase();
-  }
-  if (parts.length > 1) {
-    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-  }
-  return 'A'; // Fallback for empty strings or other edge cases
-};
-
-
 export default function AdminNavbar() {
   const navigate = useNavigate();
-  // Use state to manage the user's name and initials to prevent race conditions
-  const [userName, setUserName] = useState('');
-  const [userInitials, setUserInitials] = useState('A');
-
-  // useEffect ensures we read from localStorage only after the component has mounted
-  useEffect(() => {
-    const storedUserName = localStorage.getItem('userName');
-    if (storedUserName) {
-      setUserName(storedUserName);
-      setUserInitials(getInitials(storedUserName));
-    }
-  }, []);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -145,42 +114,14 @@ export default function AdminNavbar() {
                 </div>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:items-center">
-                {/* Profile dropdown */}
-                <Menu as="div" className="relative ml-3">
-                  <div>
-                    <Menu.Button className="flex rounded-full bg-secondary text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-secondary">
-                      <span className="sr-only">Open user menu</span>
-                      <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xs">
-                        {userInitials}
-                      </div>
-                    </Menu.Button>
-                  </div>
-                  <Transition
-                    as={Fragment}
-                    enter="transition ease-out duration-200"
-                    enterFrom="transform opacity-0 scale-95"
-                    enterTo="transform opacity-100 scale-100"
-                    leave="transition ease-in duration-75"
-                    leaveFrom="transform opacity-100 scale-100"
-                    leaveTo="transform opacity-0 scale-95"
-                  >
-                    <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-secondary py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button
-                            onClick={handleLogout}
-                            className={classNames(
-                              active ? 'bg-card' : '',
-                              'block w-full text-left px-4 py-2 text-sm text-muted-foreground'
-                            )}
-                          >
-                            Sign out
-                          </button>
-                        )}
-                      </Menu.Item>
-                    </Menu.Items>
-                  </Transition>
-                </Menu>
+                {/* --- Simplified Logout Button --- */}
+                <button
+                  onClick={handleLogout}
+                  className="inline-flex items-center rounded-md bg-secondary px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-card hover:text-foreground transition-colors"
+                >
+                  <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2" />
+                  <span>Logout</span>
+                </button>
               </div>
               <div className="-mr-2 flex items-center sm:hidden">
                 {/* Mobile menu button */}
@@ -213,22 +154,12 @@ export default function AdminNavbar() {
                 </Disclosure.Button>
               ))}
             </div>
-            <div className="border-t border-border pt-4 pb-3">
-              <div className="flex items-center px-4">
-                <div className="flex-shrink-0">
-                  <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-white font-bold">
-                     {userInitials}
-                  </div>
-                </div>
-                <div className="ml-3">
-                  <div className="text-base font-medium text-foreground">{userName}</div>
-                </div>
-              </div>
-              <div className="mt-3 space-y-1">
+            <div className="border-t border-border pt-3 pb-3">
+               <div className="space-y-1 px-2">
                 <Disclosure.Button
                   as="button"
                   onClick={handleLogout}
-                  className="block w-full text-left rounded-md px-4 py-2 text-base font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  className="block w-full text-left rounded-md px-3 py-2 text-base font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
                 >
                   Sign out
                 </Disclosure.Button>
